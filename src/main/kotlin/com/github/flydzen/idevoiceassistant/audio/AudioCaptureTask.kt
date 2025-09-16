@@ -1,5 +1,7 @@
 package com.github.flydzen.idevoiceassistant.audio
 
+import com.github.flydzen.idevoiceassistant.audio.listeners.AudioListener
+import com.github.flydzen.idevoiceassistant.audio.listeners.LogListener
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.thisLogger
 import kotlinx.coroutines.*
@@ -17,6 +19,8 @@ class AudioCaptureTask(seconds: Int) {
     init {
         require(seconds > 0) { "Seconds must be positive" }
         require(seconds <= MAX_TIME_SECONDS) { "Seconds must be less than $MAX_TIME_SECONDS" }
+
+        listener = LogListener()
     }
 
     suspend fun run() = coroutineScope {
@@ -31,7 +35,6 @@ class AudioCaptureTask(seconds: Int) {
         try {
             microphone.startCapture(tempFile)
         } catch(e: Exception) {
-            LOG.error("Audio capture error", e)
             listener?.onError(e)
         }
         finally {
@@ -57,7 +60,6 @@ class AudioCaptureTask(seconds: Int) {
         start()
         val out = AudioInputStream(this)
         listener?.onStart()
-        LOG.info("Audio capture started")
         withContext(Dispatchers.IO) {
             AudioSystem.write(out, AudioFileFormat.Type.WAVE, file)
         }
@@ -71,7 +73,6 @@ class AudioCaptureTask(seconds: Int) {
             close()
         }
         listener?.onStop()
-        LOG.info("Audio capture stopped")
     }
 
     companion object {
