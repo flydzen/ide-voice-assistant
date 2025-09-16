@@ -14,13 +14,13 @@ class AudioCaptureTask(seconds: Int) {
     private val duration = TimeUnit.SECONDS.toMillis(seconds.toLong())
 
     @Volatile
-    private var listener: AudioListener? = null
+    private var listeners: MutableList<AudioListener> = mutableListOf()
 
     init {
         require(seconds > 0) { "Seconds must be positive" }
         require(seconds <= MAX_TIME_SECONDS) { "Seconds must be less than $MAX_TIME_SECONDS" }
 
-        listener = LogListener()
+        listeners.add(LogListener())
     }
 
     suspend fun run() = coroutineScope {
@@ -30,16 +30,19 @@ class AudioCaptureTask(seconds: Int) {
         val stopper = launch {
             delay(duration)
             microphone.stopCapture()
+            triggerOnStop()
         }
 
         try {
             microphone.startCapture(tempFile)
+            triggerOnStart()
         } catch(e: Exception) {
-            listener?.onError(e)
+            triggerOnError(e)
         }
         finally {
             stopper.cancel()
             microphone.stopCapture()
+            triggerOnStop()
         }
     }
 
@@ -59,7 +62,6 @@ class AudioCaptureTask(seconds: Int) {
     private suspend fun TargetDataLine.startCapture(file: File) {
         start()
         val out = AudioInputStream(this)
-        listener?.onStart()
         withContext(Dispatchers.IO) {
             AudioSystem.write(out, AudioFileFormat.Type.WAVE, file)
         }
@@ -72,7 +74,18 @@ class AudioCaptureTask(seconds: Int) {
         if (isOpen) {
             close()
         }
-        listener?.onStop()
+    }
+
+    private fun triggerOnStart() {
+        listeners.forEach { it.onStart() }
+    }
+
+    private fun triggerOnStop() {
+        listeners.forEach { it.onStop() }
+    }
+
+    private fun triggerOnError(t: Throwable) {
+        listeners.forEach { it.onError(t) }
     }
 
     companion object {
