@@ -1,7 +1,7 @@
 package com.github.flydzen.idevoiceassistant.services
 
-import com.intellij.openapi.Disposable
 import com.github.flydzen.idevoiceassistant.openai.OpenAIClient
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -22,8 +22,8 @@ class VoiceRecognitionService(private val project: Project, private val scope: C
 
     init {
         scope.launch {
-            VADService.getInstance(project).outputFlow.collectLatest { filePath ->
-                if (filePath?.exists() != true) return@collectLatest
+            VADService.getInstance(project).outputChannel.receiveAsFlow().collectLatest { filePath ->
+                if (!filePath.exists()) return@collectLatest
                 val text = OpenAIClient.speech2Text(filePath.toFile())
                 _recognizedText.emit(text)
             }

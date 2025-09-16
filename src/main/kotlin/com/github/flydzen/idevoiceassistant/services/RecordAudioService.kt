@@ -8,8 +8,8 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.concurrent.atomic.AtomicBoolean
@@ -30,8 +30,7 @@ class RecordAudioService(
     @get:Synchronized
     private val microphone = createMicrophone()
 
-    private val _inputFlow = MutableStateFlow<Byte?>(null)
-    val inputFlow = _inputFlow.asSharedFlow()
+    val inputChannel = Channel<Byte>(capacity = Channel.BUFFERED, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
     fun start() {
         if (!lock()) {
@@ -83,7 +82,7 @@ class RecordAudioService(
             while (this@RecordAudioService.isActive.get()) {
                 val n = microphone.read(buffer, 0, buffer.size)
                 if (n <= 0) break
-                buffer.forEach { byte -> _inputFlow.emit(byte) }
+                buffer.forEach { byte -> inputChannel.send(byte) }
             }
         } catch (t: Throwable) {
             LOG.warn("Capture read interrupted: ${t.message}")

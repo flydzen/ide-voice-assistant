@@ -11,11 +11,12 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import java.io.ByteArrayOutputStream
 import java.io.IOException
@@ -33,8 +34,7 @@ class VADService(
 ): Disposable {
     val estimator: ChunkSpeechEstimator = AmplitudeChunkSpeechEstimator()
 
-    private val _outputFlow = MutableStateFlow<Path?>(null)
-    val outputFlow = _outputFlow.asSharedFlow()
+    val outputChannel = Channel<Path>(capacity = Channel.BUFFERED, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
     private val LOG: Logger = thisLogger()
 
@@ -73,8 +73,8 @@ class VADService(
         job?.cancel()
         job = scope.launch {
             project.service<RecordAudioService>()
-                .inputFlow
-                .filterNotNull()
+                .inputChannel
+                .receiveAsFlow()
                 .collect { b ->
                     onByte(b)
                 }
@@ -119,7 +119,7 @@ class VADService(
         val speech = estimator.isSpeech(floatWindow)
 
         val probability = estimator.getProbability(floatWindow)
-        scope.launch { _volumeLevel.emit(probability) }
+        _volumeLevel.emit(probability)
 
         if (!inSpeech) {
             if (speech) {
@@ -153,7 +153,7 @@ class VADService(
             val pcm = buffer.toByteArray()
             val path = createOutputPath()
             writeWav(path, pcm)
-            scope.launch { _outputFlow.emit(path) }
+            scope.launch { outputChannel.send(path) }
             LOG.info("конец фразы")
             LOG.info("Фраза сохранена: $path")
         } catch (e: Throwable) {
