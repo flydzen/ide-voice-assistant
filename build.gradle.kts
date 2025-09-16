@@ -50,6 +50,8 @@ dependencies {
         bundledModules(providers.gradleProperty("platformBundledModules").map { it.split(',') })
 
         testFramework(TestFrameworkType.Platform)
+
+        implementation("com.microsoft.onnxruntime:onnxruntime:1.20.0")
     }
 }
 

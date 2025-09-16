@@ -1,6 +1,7 @@
 package com.github.flydzen.idevoiceassistant.services
 
 import com.github.flydzen.idevoiceassistant.audio.AudioCaptureTask
+import com.github.flydzen.idevoiceassistant.vad.VadService
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -30,7 +31,12 @@ class VoiceRecognitionService(private val project: Project, private val scope: C
         recognitionJob = scope.launch {
             try {
                 // For now, simulate recognition with delay
-                project.service<RecordAudioService>().execute { AudioCaptureTask(4).run() }
+                val record = project.service<RecordAudioService>()
+                record.execute { AudioCaptureTask(4).run() }
+
+                val vad = VadService.getInstance()
+                vad.startListening(record.inputFlow)
+
                 delay(500)
 
                 if (scope.isActive) {
