@@ -2,7 +2,9 @@ package com.github.flydzen.idevoiceassistant.audio.listeners
 
 import com.intellij.openapi.diagnostic.thisLogger
 
-class LogListener : AudioListener {
+object LogListener : AudioListener {
+    private val LOG = thisLogger()
+
     override fun onStart() {
         LOG.info("Audio capture started")
     }
@@ -13,9 +15,5 @@ class LogListener : AudioListener {
 
     override fun onError(t: Throwable) {
         LOG.error("Audio capture error", t)
-    }
-
-    companion object {
-        private val LOG = thisLogger()
     }
 }

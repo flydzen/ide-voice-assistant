@@ -20,7 +20,7 @@ class AudioCaptureTask(seconds: Int) {
         require(seconds > 0) { "Seconds must be positive" }
         require(seconds <= MAX_TIME_SECONDS) { "Seconds must be less than $MAX_TIME_SECONDS" }
 
-        listeners.add(LogListener())
+        listeners.add(LogListener)
     }
 
     suspend fun run() = coroutineScope {
