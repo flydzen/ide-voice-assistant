@@ -18,7 +18,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 class RecordAudioService(private val project: Project, private val scope: CoroutineScope) {
     private val isActive = AtomicBoolean(false)
 
-    private val _inputFlow = MutableStateFlow<FloatArray?>(null)
+    private val _inputFlow = MutableStateFlow<Byte?>(null)
     val inputFlow = _inputFlow.asSharedFlow()
 
     private val mutex = Mutex()
