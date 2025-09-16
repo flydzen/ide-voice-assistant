@@ -69,7 +69,7 @@ class RecordAudioService(
     }
 
     private fun startCapture() {
-        start()
+        microphone.start()
         scope.launch {
             withContext(Dispatchers.IO) {
                 emitPcmBytes()
