@@ -205,8 +205,4 @@ class VADService(
     }
 
     override fun dispose() {}
-
-    companion object {
-        fun getInstance(project: Project): VADService = project.service()
-    }
 }

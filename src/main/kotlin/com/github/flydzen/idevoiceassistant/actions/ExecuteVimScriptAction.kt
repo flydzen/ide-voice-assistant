@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.progress.currentThreadCoroutineScope
 import com.intellij.openapi.project.Project
@@ -32,7 +33,7 @@ class ExecuteVimScriptAction : AnAction() {
             IdeFocusManager.getInstance(project)
                 .requestFocus(selectedEditor.contentComponent, true)
 
-            VimScriptExecutionService.getInstance(project).execute(script)
+            project.service<VimScriptExecutionService>().execute(script)
         }
     }
 

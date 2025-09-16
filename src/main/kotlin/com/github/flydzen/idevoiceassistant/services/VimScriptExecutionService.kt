@@ -2,7 +2,6 @@ package com.github.flydzen.idevoiceassistant.services
 
 import com.intellij.openapi.command.writeCommandAction
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.maddyhome.idea.vim.api.injector
@@ -35,7 +34,5 @@ class VimScriptExecutionService(private val project: Project) {
 
     companion object {
         private val LOG = logger<VimScriptExecutionService>()
-
-        fun getInstance(project: Project): VimScriptExecutionService = project.service()
     }
 }

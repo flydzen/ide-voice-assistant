@@ -3,6 +3,7 @@ package com.github.flydzen.idevoiceassistant.toolWindow
 import com.github.flydzen.idevoiceassistant.VoiceAssistantBundle
 import com.github.flydzen.idevoiceassistant.services.VADService
 import com.github.flydzen.idevoiceassistant.services.VoiceRecognitionService
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.wm.ToolWindow
@@ -16,13 +17,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import java.awt.BorderLayout
+import java.awt.*
 import java.awt.Component.LEFT_ALIGNMENT
-import java.awt.Dimension
-import java.awt.Font
-import java.awt.Graphics
-import java.awt.Graphics2D
-import java.awt.RenderingHints
 import javax.swing.*
 
 class VoiceAssistantToolWindowFactory : ToolWindowFactory {
@@ -50,16 +46,14 @@ class VoiceAssistantToolWindowFactory : ToolWindowFactory {
         private lateinit var volumeBar: VolumeBar
 
         init {
-            val voiceRecognitionService = VoiceRecognitionService.getInstance(project)
-
             scope.launch {
-                voiceRecognitionService.recognizedText.collectLatest { text ->
+                project.service<VoiceRecognitionService>().recognizedText.collectLatest { text ->
                     appendRecognizedText(text)
                 }
             }
 
             scope.launch {
-                voiceRecognitionService.isRecognitionActive.collectLatest { isActive ->
+                project.service<VoiceRecognitionService>().isRecognitionActive.collectLatest { isActive ->
                     if (!isActive) {
                         stopTextAnimation()
                     }
@@ -67,7 +61,7 @@ class VoiceAssistantToolWindowFactory : ToolWindowFactory {
             }
 
             scope.launch {
-                VADService.getInstance(project).volumeLevel.collectLatest { volume ->
+                project.service<VADService>().volumeLevel.collectLatest { volume ->
                     SwingUtilities.invokeLater {
                         volumeBar.setVolume(volume)
                     }
@@ -119,12 +113,12 @@ class VoiceAssistantToolWindowFactory : ToolWindowFactory {
                                 clearRecognizedText()
                                 startAnimation(this)
                                 toolTipText = "Stop listening"
-                                VoiceRecognitionService.getInstance(project).startRecognition()
+                                project.service<VoiceRecognitionService>().startRecognition()
                             } else {
                                 toolTipText = "Start listening"
                                 stopAnimation()
                                 icon = VOICE_ASSISTANT_ICON
-                                VoiceRecognitionService.getInstance(project).stopRecognition()
+                                project.service<VoiceRecognitionService>().stopRecognition()
                             }
                         }
                     }

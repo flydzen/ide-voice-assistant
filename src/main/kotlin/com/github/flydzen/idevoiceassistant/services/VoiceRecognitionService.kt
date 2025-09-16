@@ -22,7 +22,7 @@ class VoiceRecognitionService(private val project: Project, private val scope: C
 
     init {
         scope.launch {
-            VADService.getInstance(project).outputChannel.receiveAsFlow().collectLatest { filePath ->
+            project.service<VADService>().outputChannel.receiveAsFlow().collectLatest { filePath ->
                 if (!filePath.exists()) return@collectLatest
                 val text = OpenAIClient.speech2Text(filePath.toFile())
                 _recognizedText.emit(text)
@@ -59,10 +59,5 @@ class VoiceRecognitionService(private val project: Project, private val scope: C
 
     override fun dispose() {
         scope.cancel()
-    }
-
-
-    companion object {
-        fun getInstance(project: Project): VoiceRecognitionService = project.service()
     }
 }
