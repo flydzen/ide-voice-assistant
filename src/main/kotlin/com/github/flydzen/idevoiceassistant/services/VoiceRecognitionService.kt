@@ -31,22 +31,19 @@ class VoiceRecognitionService(private val project: Project, private val scope: C
         _isRecognitionActive.value = true
 
         recognitionJob = scope.launch {
-            try {
-                // For now, simulate recognition with delay
+            // For now, simulate recognition with delay
 //                val record = project.service<RecordAudioService>()
 //                record.start(AudioCaptureTask(4))
 //
 //                val vad = VadService.getInstance()
 //                vad.startListening(record.inputFlow)
 
-                delay(500)
+            delay(500)
 
-                if (scope.isActive) {
-                    val recognizedText = "Hello, this is recognized text from the service!"
+            if (scope.isActive) {
+                val recognizedText = "Hello, this is recognized text from the service!"
 
-                    _recognizedText.emit(recognizedText)
-                }
-            } catch (e: CancellationException) {
+                _recognizedText.emit(recognizedText)
             }
         }
     }
