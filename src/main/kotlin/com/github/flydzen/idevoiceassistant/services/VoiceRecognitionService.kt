@@ -40,13 +40,6 @@ class VoiceRecognitionService(private val project: Project, private val scope: C
         _isRecognitionActive.value = true
 
         recognitionJob = scope.launch {
-            // For now, simulate recognition with delay
-//                val record = project.service<RecordAudioService>()
-//                record.start()
-//
-//                val vad = VadService.getInstance()
-//                vad.startListening(record.inputFlow)
-
             delay(500)
 
             if (scope.isActive) {

@@ -1,6 +1,8 @@
 package com.github.flydzen.idevoiceassistant.vad
 
 
-fun interface ChunkSpeechEstimator {
+interface ChunkSpeechEstimator {
     fun isSpeech(chunk: FloatArray): Boolean
+
+    fun getProbability(chunk: FloatArray): Float
 }

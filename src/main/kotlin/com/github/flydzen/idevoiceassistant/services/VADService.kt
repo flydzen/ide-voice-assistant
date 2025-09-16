@@ -12,7 +12,9 @@ import com.intellij.openapi.project.Project
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.launch
 import java.io.ByteArrayOutputStream
@@ -58,6 +60,10 @@ class VADService(
     private var inSpeech = false
     private var silenceCounter = 0
     private var phraseBuffer: ByteArrayOutputStream? = null
+
+    private val _volumeLevel = MutableStateFlow(0.0f)
+    val volumeLevel: StateFlow<Float> = _volumeLevel.asStateFlow()
+
 
     init {
         start()
@@ -111,6 +117,9 @@ class VADService(
 
     private fun processWindow(floatWindow: FloatArray, rawBytes: ByteArray, rawLen: Int) {
         val speech = estimator.isSpeech(floatWindow)
+
+        val probability = estimator.getProbability(floatWindow)
+        scope.launch { _volumeLevel.emit(probability) }
 
         if (!inSpeech) {
             if (speech) {

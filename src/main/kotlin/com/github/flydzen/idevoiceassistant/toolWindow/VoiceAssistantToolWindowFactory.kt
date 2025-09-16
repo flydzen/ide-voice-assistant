@@ -1,6 +1,7 @@
 package com.github.flydzen.idevoiceassistant.toolWindow
 
 import com.github.flydzen.idevoiceassistant.VoiceAssistantBundle
+import com.github.flydzen.idevoiceassistant.services.VADService
 import com.github.flydzen.idevoiceassistant.services.VoiceRecognitionService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IconLoader
@@ -19,6 +20,9 @@ import java.awt.BorderLayout
 import java.awt.Component.LEFT_ALIGNMENT
 import java.awt.Dimension
 import java.awt.Font
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.RenderingHints
 import javax.swing.*
 
 class VoiceAssistantToolWindowFactory : ToolWindowFactory {
@@ -43,7 +47,7 @@ class VoiceAssistantToolWindowFactory : ToolWindowFactory {
         private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
         private lateinit var recognizedTextArea: JTextArea
-
+        private lateinit var volumeBar: VolumeBar
 
         init {
             val voiceRecognitionService = VoiceRecognitionService.getInstance(project)
@@ -61,6 +65,15 @@ class VoiceAssistantToolWindowFactory : ToolWindowFactory {
                     }
                 }
             }
+
+            scope.launch {
+                VADService.getInstance(project).volumeLevel.collectLatest { volume ->
+                    SwingUtilities.invokeLater {
+                        volumeBar.setVolume(volume)
+                    }
+                }
+            }
+
         }
 
         private val jetbrainsMonoFont = Font("JetBrains Mono", Font.PLAIN, 15)
@@ -89,29 +102,44 @@ class VoiceAssistantToolWindowFactory : ToolWindowFactory {
                     alignmentX = LEFT_ALIGNMENT
                 }
 
-                val startButton = JButton().apply {
-                    font = jetbrainsMonoFont
-                    icon = VOICE_ASSISTANT_ICON
+                val microphonePanel = JBPanel<JBPanel<*>>().apply {
+                    layout = BoxLayout(this, BoxLayout.X_AXIS)
                     alignmentX = LEFT_ALIGNMENT
-                    preferredSize = Dimension(40, 40)
-                    minimumSize = Dimension(40, 40)
-                    maximumSize = Dimension(40, 40)
 
-                    addActionListener {
-                        _active = !_active
-                        if (_active) {
-                            clearRecognizedText()
-                            startAnimation(this)
-                            toolTipText = "Stop listening"
-                            VoiceRecognitionService.getInstance(project).startRecognition()
-                        } else {
-                            toolTipText = "Start listening"
-                            stopAnimation()
-                            icon = VOICE_ASSISTANT_ICON
-                            VoiceRecognitionService.getInstance(project).stopRecognition()
+                    val startButton = JButton().apply {
+                        font = jetbrainsMonoFont
+                        icon = VOICE_ASSISTANT_ICON
+                        preferredSize = Dimension(40, 40)
+                        minimumSize = Dimension(40, 40)
+                        maximumSize = Dimension(40, 40)
+
+                        addActionListener {
+                            _active = !_active
+                            if (_active) {
+                                clearRecognizedText()
+                                startAnimation(this)
+                                toolTipText = "Stop listening"
+                                VoiceRecognitionService.getInstance(project).startRecognition()
+                            } else {
+                                toolTipText = "Start listening"
+                                stopAnimation()
+                                icon = VOICE_ASSISTANT_ICON
+                                VoiceRecognitionService.getInstance(project).stopRecognition()
+                            }
                         }
                     }
+
+                    volumeBar = VolumeBar().apply {
+                        preferredSize = Dimension(150, 20)
+                        minimumSize = Dimension(150, 20)
+                        maximumSize = Dimension(150, 20)
+                    }
+
+                    add(startButton)
+                    add(Box.createHorizontalStrut(10))
+                    add(volumeBar)
                 }
+
 
                 recognizedTextArea = JTextArea().apply {
                     font = jetbrainsMonoUserFont
@@ -130,7 +158,7 @@ class VoiceAssistantToolWindowFactory : ToolWindowFactory {
                 add(Box.createVerticalStrut(30))
                 add(descriptionLabel)
                 add(Box.createVerticalStrut(30))
-                add(startButton)
+                add(microphonePanel)
                 add(Box.createVerticalStrut(15))
                 add(recognizedTextArea)
                 add(Box.createVerticalGlue())
@@ -194,6 +222,68 @@ class VoiceAssistantToolWindowFactory : ToolWindowFactory {
                 }
             }.apply { start() }
         }
+
+        class VolumeBar : JComponent() {
+            private var currentVolume: Float = 0.0f
+            private var targetVolume: Float = 0.0f
+            private val maxExpectedVolume: Float = 1f
+
+            private val smoothingFactor: Float = 0.25f
+
+            private var smoothingTimer: Timer? = null
+
+            fun setVolume(newVolume: Float) {
+                targetVolume = (newVolume / maxExpectedVolume).coerceIn(0.0f, maxExpectedVolume)
+                startSmoothing()
+            }
+
+            private fun startSmoothing() {
+                if (smoothingTimer?.isRunning != true) {
+                    smoothingTimer = Timer(16) {
+                        val diff = targetVolume - currentVolume
+                        if (kotlin.math.abs(diff) < 0.001f) {
+                            currentVolume = targetVolume
+                            smoothingTimer?.stop()
+                        } else {
+                            currentVolume += diff * smoothingFactor
+                        }
+                        repaint()
+                    }.apply { start() }
+                }
+            }
+
+            override fun paintComponent(g: Graphics) {
+                super.paintComponent(g)
+                val g2d = g as Graphics2D
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
+
+                val width = width
+                val height = height
+                val margin = 2
+
+                g2d.color = JBColor(0x3C3F41, 0x2B2B2B)
+                g2d.fillRoundRect(0, 0, width, height, 4, 4)
+
+                val volumeWidth = ((currentVolume / maxExpectedVolume) * (width - 2 * margin)).toInt()
+                if (volumeWidth > 0) {
+                    val green = JBColor(0x59A869, 0x499C54)
+                    val yellow = JBColor(0xEDA200, 0xE8A317)
+                    val red = JBColor(0xE05555, 0xC75450)
+
+                    g2d.color = when {
+                        currentVolume < maxExpectedVolume * 0.5f -> green
+                        currentVolume < maxExpectedVolume * 0.8f -> yellow
+                        else -> red
+                    }
+
+                    g2d.fillRoundRect(margin, margin, volumeWidth, height - 2 * margin, 2, 2)
+                }
+
+                g2d.color = JBColor(0x646464, 0x4C4C4C)
+                g2d.drawRoundRect(0, 0, width - 1, height - 1, 4, 4)
+            }
+        }
+
 
 
         companion object {

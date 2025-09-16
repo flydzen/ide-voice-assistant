@@ -8,12 +8,16 @@ class AmplitudeChunkSpeechEstimator(
 
     override fun isSpeech(chunk: FloatArray): Boolean {
         if (chunk.isEmpty()) return false
+
+        return getProbability(chunk) >= amplitudeThreshold
+    }
+
+    override fun getProbability(chunk: FloatArray): Float {
         var sumSq = 0.0
         for (v in chunk) {
             val x = v.toDouble()
             sumSq += x * x
         }
-        val rms = sqrt(sumSq / chunk.size)
-        return rms >= amplitudeThreshold
+        return sqrt(sumSq / chunk.size).toFloat()
     }
 }
