@@ -2,16 +2,7 @@ package com.github.flydzen.idevoiceassistant.vad
 
 import kotlin.math.sqrt
 
-class AmplitudeChunkSpeechEstimator(
-    private val amplitudeThreshold: Float = 0.035f
-) : ChunkSpeechEstimator {
-
-    override fun isSpeech(chunk: FloatArray): Boolean {
-        if (chunk.isEmpty()) return false
-
-        return getProbability(chunk) >= amplitudeThreshold
-    }
-
+class AmplitudeChunkSpeechEstimator: ChunkSpeechEstimator {
     override fun getProbability(chunk: FloatArray): Float {
         var sumSq = 0.0
         for (v in chunk) {

@@ -1,6 +1,7 @@
 package com.github.flydzen.idevoiceassistant.services
 
 import com.github.flydzen.idevoiceassistant.Config
+import com.github.flydzen.idevoiceassistant.audio.saveWave
 import com.github.flydzen.idevoiceassistant.vad.AmplitudeChunkSpeechEstimator
 import com.github.flydzen.idevoiceassistant.vad.ChunkSpeechEstimator
 import com.intellij.openapi.Disposable
@@ -60,7 +61,8 @@ class VADService(
 
     private val _volumeLevel = MutableStateFlow(0.0f)
     val volumeLevel: StateFlow<Float> = _volumeLevel.asStateFlow()
-
+    private var fullBuffer = ByteArray(100000)
+    private var fullBufferFill = 0
 
     init {
         scope.launch {
@@ -68,6 +70,9 @@ class VADService(
                 .inputChannel
                 .receiveAsFlow()
                 .collect { b ->
+                    if (fullBufferFill < fullBuffer.size) {
+                        fullBuffer[fullBufferFill++] = b
+                    }
                     onByte(b)
                 }
         }
@@ -108,17 +113,18 @@ class VADService(
     }
 
     private suspend fun processWindow(floatWindow: FloatArray, rawBytes: ByteArray, rawLen: Int) {
-        val speech = estimator.isSpeech(floatWindow)
 
         val probability = estimator.getProbability(floatWindow)
+        val speech = probability > 0.4f
         _volumeLevel.emit(probability)
 
+        println("Prob $probability")
         if (!inSpeech) {
             if (speech) {
                 inSpeech = true
                 silenceCounter = 0
                 phraseBuffer = ByteArrayOutputStream().also { it.write(rawBytes, 0, rawLen) }
-                LOG.info("начало фразы")
+                print("начало фразы")
             } else {
                 // тишина, остаёмся вне речи
             }
@@ -144,10 +150,14 @@ class VADService(
         try {
             val pcm = buffer.toByteArray()
             val path = createOutputPath()
-            writeWav(path, pcm)
+            val path2 = createOutputPath()
+
+            saveWave(fullBuffer, path2.toFile())
+            saveWave(pcm, path.toFile())
             outputChannel.send(path)
-            LOG.info("конец фразы")
-            LOG.info("Фраза сохранена: $path")
+            print("Path full: $path2")
+            println("конец фразы")
+            println("Фраза сохранена: $path")
         } catch (e: Throwable) {
             LOG.warn("Не удалось сохранить фразу в WAV", e)
         }
@@ -159,48 +169,6 @@ class VADService(
             Files.createTempFile("utterance_$ts", ".wav")
         } catch (_: IOException) {
             Path.of("utterance_$ts.wav")
-        }
-    }
-
-    // Конвертация блока PCM16LE -> float32 [-1, 1]
-    private fun i16LeBlockToFloat(src: ByteArray, length: Int): FloatArray {
-        val out = FloatArray(length / 2)
-        var i = 0
-        var j = 0
-        while (i + 1 < length) {
-            val lo = src[i].toInt() and 0xFF
-            val hi = src[i + 1].toInt()
-            val s = ((hi shl 8) or lo).toShort().toInt()
-            out[j++] = if (s >= 0) s / 32767f else s / 32768f
-            i += 2
-        }
-        return out
-    }
-
-    private fun writeWav(path: Path, pcmLe: ByteArray) {
-        val byteRate = Config.audioFormat.sampleRate * Config.audioFormat.channels * Config.bytesPerSample
-        val blockAlign = Config.audioFormat.channels * Config.bytesPerSample
-        val dataSize = pcmLe.size
-        val chunkSize = 36 + dataSize
-
-        val header = ByteBuffer.allocate(44).order(ByteOrder.LITTLE_ENDIAN)
-        header.put("RIFF".toByteArray(Charsets.US_ASCII))
-        header.putInt(chunkSize)
-        header.put("WAVE".toByteArray(Charsets.US_ASCII))
-        header.put("fmt ".toByteArray(Charsets.US_ASCII))
-        header.putInt(16)                  // PCM subchunk size
-        header.putShort(1)                 // Audio format 1 = PCM
-        header.putShort(Config.audioFormat.channels.toShort())
-        header.putInt(Config.audioFormat.sampleRate.toInt())
-        header.putInt(byteRate.toInt())
-        header.putShort(blockAlign.toShort())
-        header.putShort(Config.audioFormat.sampleSizeInBits.toShort())
-        header.put("data".toByteArray(Charsets.US_ASCII))
-        header.putInt(dataSize)
-
-        Files.newOutputStream(path).use { out ->
-            out.write(header.array())
-            out.write(pcmLe)
         }
     }
 

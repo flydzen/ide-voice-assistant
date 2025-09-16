@@ -18,6 +18,7 @@ import com.openai.models.audio.AudioModel
 import com.openai.models.audio.AudioResponseFormat
 import com.openai.models.audio.transcriptions.TranscriptionCreateParams
 import com.openai.models.audio.transcriptions.TranscriptionInclude
+import fleet.kernel.transactor
 import java.io.File
 
 
@@ -77,15 +78,18 @@ object OpenAIClient {
             .build()
 
     fun speech2Text(file: File): String {
+        return "create function that prints hello"
         val response = client.audio().transcriptions().create(
             TranscriptionCreateParams.builder()
                 .model(AudioModel.WHISPER_1)
+//                .language("ru-RU")
                 .prompt("This is a user input to control Code Editor.")
                 .responseFormat(AudioResponseFormat.TEXT)
                 .file(file.toPath())
                 .build()
         )
-        return response.asTranscription().text()
+
+        return objectMapper.readValue<Map<String, Any>>(response.asTranscription().text())["text"].toString()
     }
 
     fun textToCommand(text: String): List<CommandResult> {

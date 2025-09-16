@@ -203,12 +203,6 @@ class SileroChunkSpeechEstimator(
         srTensor = OnnxTensor.createTensor(env, Config.audioFormat.sampleSizeInBits) // int64 scalar
     }
 
-    override fun isSpeech(chunk: FloatArray): Boolean {
-        if (chunk.isEmpty()) return false
-
-        return getProbability(chunk) > threshold
-    }
-
     override fun getProbability(chunk: FloatArray): Float {
         if (chunk.size != windowSize) {
             log.warn("Silero VAD received chunk of size ${chunk.size}, expected $windowSize — skipping")

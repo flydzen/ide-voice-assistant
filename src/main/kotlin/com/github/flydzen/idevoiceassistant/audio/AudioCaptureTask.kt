@@ -14,6 +14,14 @@ import java.util.concurrent.TimeUnit
 import javax.sound.sampled.*
 import kotlin.io.path.createTempFile
 
+fun saveWave(pcmData: ByteArray, wavFile: File) {
+    val frameSize = Config.audioFormat.frameSize
+    val frameLength = (pcmData.size / frameSize).toLong()
+    val stream = ByteArrayInputStream(pcmData)
+    val ais = AudioInputStream(stream, Config.audioFormat, frameLength)
+    AudioSystem.write(ais, AudioFileFormat.Type.WAVE, wavFile)
+}
+
 class AudioCaptureTask(seconds: Int) {
     private val duration = TimeUnit.SECONDS.toMillis(seconds.toLong())
 
@@ -88,14 +96,6 @@ class AudioCaptureTask(seconds: Int) {
             triggerOnError(t)
         }
         return out.toByteArray()
-    }
-
-    private fun saveWave(pcmData: ByteArray, wavFile: File) {
-        val frameSize = Config.audioFormat.frameSize
-        val frameLength = (pcmData.size / frameSize).toLong()
-        val stream = ByteArrayInputStream(pcmData)
-        val ais = AudioInputStream(stream, Config.audioFormat, frameLength)
-        AudioSystem.write(ais, AudioFileFormat.Type.WAVE, wavFile)
     }
 
     private fun TargetDataLine.stopCapture() {
