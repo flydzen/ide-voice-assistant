@@ -1,7 +1,5 @@
 package com.github.flydzen.idevoiceassistant.services
 
-import com.github.flydzen.idevoiceassistant.audio.AudioCaptureTask
-import com.github.flydzen.idevoiceassistant.vad.VadService
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
