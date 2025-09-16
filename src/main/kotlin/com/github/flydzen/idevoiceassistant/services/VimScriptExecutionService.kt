@@ -4,7 +4,9 @@ import com.intellij.openapi.command.writeCommandAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import com.intellij.vim.api.models.Mode
 import com.maddyhome.idea.vim.api.injector
+import com.maddyhome.idea.vim.thinapi.changeMode
 
 @Service(Service.Level.PROJECT)
 class VimScriptExecutionService(private val project: Project) {
@@ -22,12 +24,14 @@ class VimScriptExecutionService(private val project: Project) {
                 LOG.error("No focused editor")
                 return@writeCommandAction false
             }
+            changeMode(Mode.NORMAL, vimEditor)
             val vimContext = injector.executionContextManager.getEditorExecutionContext(vimEditor)
             val result = injector.vimscriptExecutor.execute(
                 vimScript, vimEditor, vimContext,
                 skipHistory = true,
                 indicateErrors = true
             )
+            changeMode(Mode.INSERT, vimEditor)
             result == com.maddyhome.idea.vim.vimscript.model.ExecutionResult.Success
         }
     }
