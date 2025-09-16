@@ -10,7 +10,6 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -30,7 +29,7 @@ import java.time.format.DateTimeFormatter
 @Service(Service.Level.PROJECT)
 class VADService(
     private val project: Project,
-    private val scope: CoroutineScope,
+    scope: CoroutineScope,
 ): Disposable {
     val estimator: ChunkSpeechEstimator = AmplitudeChunkSpeechEstimator()
 
@@ -44,8 +43,6 @@ class VADService(
 
     // Сколько «окон тишины» ждём, чтобы закрыть фразу (~192 мс при 512 сэмплах)
     private val endSilenceWindows = 6
-
-    private var job: Job? = null
 
     // Буферизация входных СЕМПЛОВ и исходных байтов на размер окна
     private val windowFloat = FloatArray(windowSamples)
@@ -66,12 +63,7 @@ class VADService(
 
 
     init {
-        start()
-    }
-
-    private fun start() {
-        job?.cancel()
-        job = scope.launch {
+        scope.launch {
             project.service<RecordAudioService>()
                 .inputChannel
                 .receiveAsFlow()
@@ -212,12 +204,7 @@ class VADService(
         }
     }
 
-    override fun dispose() {
-        try {
-            job?.cancel()
-        } catch (_: Throwable) {
-        }
-    }
+    override fun dispose() {}
 
     companion object {
         fun getInstance(project: Project): VADService = project.service()
