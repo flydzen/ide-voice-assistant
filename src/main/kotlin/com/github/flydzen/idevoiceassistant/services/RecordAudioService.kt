@@ -19,7 +19,7 @@ class RecordAudioService(private val project: Project, private val scope: Corout
     private val isActive = AtomicBoolean(false)
 
     private val _inputFlow = MutableStateFlow<Byte?>(null)
-    private val inputFlow = _inputFlow.asSharedFlow()
+    val inputFlow = _inputFlow.asSharedFlow()
 
     private val mutex = Mutex()
 
