@@ -1,5 +1,7 @@
 package com.github.flydzen.idevoiceassistant.services
 
+import com.github.flydzen.idevoiceassistant.vad.AmplitudeChunkSpeechEstimator
+import com.github.flydzen.idevoiceassistant.vad.ChunkSpeechEstimator
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
@@ -7,11 +9,9 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.launch
 import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.nio.ByteBuffer
@@ -20,42 +20,37 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import kotlin.math.min
-import kotlin.math.sqrt
 
 @Service(Service.Level.PROJECT)
-class AmplitudeVADetector(
+class AmplitudeDetector(
     private val project: Project,
     private val scope: CoroutineScope,
 ) {
-    private val _outputFlow = MutableStateFlow<Path?>(null)
-    val outputFlow = _outputFlow.asSharedFlow()
-
-    private val sampleRate: Int = 16_000         // Гц
-    private val channels: Int = 1
-    private val bitsPerSample: Int = 16
-    private val bytesPerSample: Int = bitsPerSample / 8
-
-    // блоки по ~10ms: при 16кГц и 1 канал = 160 сэмплов, 320 байт
-    private val frameSamples: Int = 160
-    private val frameBytes: Int = frameSamples * bytesPerSample
-
-    // Порог амплитуды для начала/поддержания речи (RMS в диапазоне 0..1 для int16)
-    private val startThresholdRms: Double = 0.04      // начало фразы
-    private val continueThresholdRms: Double = 0.025  // поддержание речи (гистерезис)
-    private val endSilenceFrames: Int = 30            // 30 * 10мс = 300мс тишины для окончания
-
     private val LOG: Logger = thisLogger()
+
+    // Настройки аудио
+    private val sampleRate = 16_000
+    private val channels = 1
+    private val bitsPerSample = 16
+    private val bytesPerSample = bitsPerSample / 8
+
+    // Фрейм ~10мс при 16кГц
+    private val frameSamples = 160
+    private val frameBytes = frameSamples * bytesPerSample
+
+    // Гистерезис VAD на уровне детектора
+    private val endSilenceFrames = 20 // ~200мс тишины для завершения фразы
 
     private var job: Job? = null
 
-    // Временные буферы
-    private val frameBuffer = ByteArray(frameBytes)
+    // Буферизация входных байт в кадры
+    private val frameBuf = ByteArray(frameBytes)
     private var frameFill = 0
+    private var pendingLo: Byte? = null // для сборки int16 из потока байт
 
-    private var inSpeech: Boolean = false
-    private var silenceCounter: Int = 0
-
+    // Состояние фразы
+    private var inSpeech = false
+    private var silenceCounter = 0
     private var phraseBuffer: ByteArrayOutputStream? = null
 
     init {
@@ -65,115 +60,101 @@ class AmplitudeVADetector(
     private fun start() {
         job?.cancel()
         job = scope.launch {
-            val recordService = project.service<RecordAudioService>()
-            recordService.inputFlow
+            project.service<RecordAudioService>()
+                .inputFlow
                 .filterNotNull()
                 .collect { b ->
-                    onByteReceived(b)
+                    onByte(b)
                 }
         }
     }
 
-    private fun onByteReceived(b: Byte) {
-        frameBuffer[frameFill++] = b
+    private fun onByte(b: Byte) {
+        val lo = pendingLo
+        if (lo == null) {
+            pendingLo = b
+            return
+        }
+        // собрали 2 байта -> кладём в frameBuf
+        frameBuf[frameFill++] = lo
+        frameBuf[frameFill++] = b
+        pendingLo = null
 
-        // при заполнении фрейма считаем показатели
         if (frameFill >= frameBytes) {
-            val rms = computeRmsInt16Le(frameBuffer, 0, frameBytes)
-            handleVadWithRms(rms, frameBuffer, 0, frameBytes)
+            // есть полный кадр, обрабатываем
+            val floats = i16LeBlockToFloat(frameBuf, frameFill)
+            processFrame(floats, frameBuf, 0, frameFill)
             frameFill = 0
         }
     }
 
-    private fun handleVadWithRms(rms: Double, data: ByteArray, off: Int, len: Int) {
+    private fun processFrame(floatFrame: FloatArray, rawBytes: ByteArray, off: Int, len: Int) {
+        val speech = estimator.isSpeech(floatFrame)
+
         if (!inSpeech) {
-            // Пока тишина — ждём превышение порога начала
-            if (rms >= startThresholdRms) {
+            if (speech) {
                 inSpeech = true
                 silenceCounter = 0
-                phraseBuffer = ByteArrayOutputStream().also {
-                    it.write(data, off, len)
-                }
+                phraseBuffer = ByteArrayOutputStream().also { it.write(rawBytes, off, len) }
                 LOG.info("начало фразы")
             } else {
-                // остаёмся в тишине
+                // тишина, остаёмся вне речи
             }
         } else {
-            // Речь активна
-            val contThreshold = continueThresholdRms
-            phraseBuffer?.write(data, off, len)
-            if (rms < contThreshold) {
+            // речь активна — добавляем в фразу и проверяем окончание
+            phraseBuffer?.write(rawBytes, off, len)
+            if (speech) {
+                silenceCounter = 0
+            } else {
                 silenceCounter++
                 if (silenceCounter >= endSilenceFrames) {
-                    // Конец фразы
                     finishPhrase()
                     inSpeech = false
                     silenceCounter = 0
                 }
-            } else {
-                // Речь продолжается — сбрасываем счётчик тишины
-                silenceCounter = 0
             }
         }
     }
 
     private fun finishPhrase() {
-        val buffer = phraseBuffer
+        val buffer = phraseBuffer ?: return
         phraseBuffer = null
-        if (buffer == null) return
-
         try {
-            val rawPcm = buffer.toByteArray()
-            val outputPath = createOutputPath()
-            writeWavFile(
-                path = outputPath,
-                pcmLe = rawPcm,
-                sampleRate = sampleRate,
-                bitsPerSample = bitsPerSample,
-                channels = channels
-            )
-            _outputFlow.value = outputPath
+            val pcm = buffer.toByteArray()
+            val path = createOutputPath()
+            writeWav(path, pcm, sampleRate, bitsPerSample, channels)
             LOG.info("конец фразы")
-            LOG.info("Фраза сохранена: $outputPath")
+            LOG.info("Фраза сохранена: $path")
         } catch (e: Throwable) {
             LOG.warn("Не удалось сохранить фразу в WAV", e)
         }
     }
 
     private fun createOutputPath(): Path {
-        val timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss_SSS"))
+        val ts = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss_SSS"))
         return try {
-            // Сохраняем во временную директорию
-            Files.createTempFile("utterance_$timestamp", ".wav")
-        } catch (e: IOException) {
-            // Фолбэк — если не получилось во временную, пробуем в рабочую директорию
-            Path.of("utterance_$timestamp.wav")
+            Files.createTempFile("utterance_$ts", ".wav")
+        } catch (_: IOException) {
+            Path.of("utterance_$ts.wav")
         }
     }
 
-    // RMS для int16 little-endian; возвращаем значение в диапазоне [0..1]
-    private fun computeRmsInt16Le(bytes: ByteArray, off: Int, len: Int): Double {
-        if (len <= 0) return 0.0
-        val sampleCount = len / 2
-        if (sampleCount == 0) return 0.0
-
-        var sumSq = 0.0
-        var i = off
-        val end = off + len
-        while (i + 1 < end) {
-            val lo = bytes[i].toInt() and 0xFF
-            val hi = bytes[i + 1].toInt() // signed; will shift with sign — ок
-            val sample = (hi shl 8) or lo
-            val s = if (sample > Short.MAX_VALUE) sample - 0x1_0000 else sample // нормализуем в signed 16
-            val norm = s / 32768.0
-            sumSq += norm * norm
+    // Конвертация блока PCM16LE -> float32 [-1, 1]
+    private fun i16LeBlockToFloat(src: ByteArray, length: Int): FloatArray {
+        val out = FloatArray(length / 2)
+        var i = 0
+        var j = 0
+        while (i + 1 < length) {
+            val lo = src[i].toInt() and 0xFF
+            val hi = src[i + 1].toInt()
+            val s = ((hi shl 8) or lo).toShort().toInt()
+            out[j++] = if (s >= 0) s / 32767f else s / 32768f
             i += 2
         }
-        val meanSq = sumSq / sampleCount
-        return sqrt(meanSq)
+        return out
     }
 
-    private fun writeWavFile(
+    private fun writeWav(
         path: Path,
         pcmLe: ByteArray,
         sampleRate: Int,
@@ -209,6 +190,7 @@ class AmplitudeVADetector(
     fun dispose() {
         try {
             job?.cancel()
-        } catch (_: Throwable) { /* ignore */ }
+        } catch (_: Throwable) {
+        }
     }
 }
