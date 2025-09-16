@@ -8,14 +8,14 @@
     <depends>IdeaVIM</depends>
     <depends>com.intellij.ml.llm</depends>
 
-    <resource-bundle>messages.MyBundle</resource-bundle>
-    
+    <resource-bundle>messages.AssistantBundle</resource-bundle>
+
     <actions>
         <action id="ExecuteVimScriptAction" class="com.github.flydzen.idevoiceassistant.actions.ExecuteVimScriptAction"/>
     </actions>
 
     <extensions defaultExtensionNs="com.intellij">
-        <toolWindow factoryClass="com.github.flydzen.idevoiceassistant.toolWindow.MyToolWindowFactory" id="MyToolWindow"/>
+        <toolWindow factoryClass="com.github.flydzen.idevoiceassistant.toolWindow.VoiceAssistantToolWindowFactory" id="Voice Assistant" anchor="right" icon="AllIcons.General.User"/>
         <postStartupActivity implementation="com.github.flydzen.idevoiceassistant.startup.MyProjectActivity" />
     </extensions>
 </idea-plugin>
