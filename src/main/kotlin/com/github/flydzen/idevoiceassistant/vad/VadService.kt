@@ -34,6 +34,9 @@ class VadService {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val log = LoggerFactory.getLogger(VadService::class.java)
 
+    private val frameBuffer = FloatArray(512)
+    private var frameFill = 0
+
     init {
         val modelBytes = javaClass.getResourceAsStream("/models/silero_vad.onnx")
             ?.readBytes()
@@ -42,13 +45,23 @@ class VadService {
         srTensor = OnnxTensor.createTensor(env, 16000L) // int64 scalar
     }
 
-    fun startListening(samples: Flow<FloatArray?>) {
+    private fun onByteReceived(b: Byte) {
+        frameBuffer[frameFill++] = b / 128f
+
+        // при заполнении фрейма считаем показатели
+        if (frameFill >= windowSize) {
+            processStreamData(frameBuffer)
+            frameFill = 0
+        }
+    }
+
+    fun startListening(samples: Flow<Byte?>) {
         scope.launch {
             try {
-                samples.collect { chunk ->
+                samples.collect { byte ->
                     if (!isActive) return@collect
-                    if (chunk == null) return@collect
-                    processStreamData(chunk)
+                    if (byte == null) return@collect
+                    onByteReceived(byte)
                 }
             } catch (t: Throwable) {
                 log.warn("VAD flow collection stopped with error", t)
