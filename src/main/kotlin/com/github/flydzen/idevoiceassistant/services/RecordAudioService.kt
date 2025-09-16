@@ -12,10 +12,11 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.ByteArrayInputStream
+import java.io.File
 import java.util.concurrent.atomic.AtomicBoolean
-import javax.sound.sampled.AudioSystem
-import javax.sound.sampled.DataLine
-import javax.sound.sampled.TargetDataLine
+import javax.sound.sampled.*
+import kotlin.io.path.createTempFile
 
 @Service(Service.Level.PROJECT)
 class RecordAudioService(
@@ -88,14 +89,28 @@ class RecordAudioService(
         val buffer = ByteArray(8192)
         try {
             while (this@RecordAudioService.isActive.get()) {
-                val n = microphone.read(buffer, 0, buffer.size)
-                if (n <= 0) break
+                microphone.read(buffer, 0, buffer.size)
                 buffer.forEach { byte -> inputChannel.send(byte) }
+                saveWave(buffer, createTempFile())
             }
         } catch (t: Throwable) {
             LOG.warn("Capture read interrupted: ${t.message}")
             triggerOnError(t)
         }
+    }
+
+    private fun createTempFile(): File {
+        val file = createTempFile(prefix = "recording-", suffix = ".wav").toFile()
+        LOG.info("Audio file created: ${file.absolutePath}")
+        return file
+    }
+
+    private fun saveWave(pcmData: ByteArray, wavFile: File) {
+        val frameSize = Config.audioFormat.frameSize
+        val frameLength = (pcmData.size / frameSize).toLong()
+        val stream = ByteArrayInputStream(pcmData)
+        val ais = AudioInputStream(stream, Config.audioFormat, frameLength)
+        AudioSystem.write(ais, AudioFileFormat.Type.WAVE, wavFile)
     }
 
     private fun stopCapture() {
