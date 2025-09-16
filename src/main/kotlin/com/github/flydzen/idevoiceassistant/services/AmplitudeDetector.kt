@@ -26,6 +26,8 @@ class AmplitudeDetector(
     private val project: Project,
     private val scope: CoroutineScope,
 ) {
+    val estimator: ChunkSpeechEstimator = AmplitudeChunkSpeechEstimator()
+
     private val LOG: Logger = thisLogger()
 
     // Настройки аудио
