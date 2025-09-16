@@ -11,6 +11,10 @@ import com.openai.models.responses.ToolChoiceOptions
 import java.time.Duration
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
+import com.openai.models.audio.AudioModel
+import com.openai.models.audio.AudioResponseFormat
+import com.openai.models.audio.transcriptions.TranscriptionCreateParams
+import com.openai.models.audio.transcriptions.TranscriptionInclude
 import java.io.File
 
 
@@ -69,8 +73,16 @@ object OpenAIClient {
             .strict(true)
             .build()
 
-    fun speech2Text(file: File): String? {
-        return null
+    fun speech2Text(file: File): String {
+        val response = client.audio().transcriptions().create(
+            TranscriptionCreateParams.builder()
+                .model(AudioModel.WHISPER_1)
+                .prompt("This is a user input to control Code Editor.")
+                .responseFormat(AudioResponseFormat.TEXT)
+                .file(file.inputStream())
+                .build()
+        )
+        return response.asTranscription().text()
     }
 
     fun textToCommand(text: String): List<CommandResult> {
