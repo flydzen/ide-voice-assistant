@@ -41,14 +41,14 @@ class RecordAudioService(
 
         try {
             triggerOnStart()
-            microphone.startCapture()
+            startCapture()
         } catch (e: Exception) {
             triggerOnError(e)
         }
     }
 
     fun stop() {
-        microphone.stopCapture()
+        stopCapture()
         triggerOnStop()
         unlock()
     }
@@ -68,11 +68,11 @@ class RecordAudioService(
         return microphone
     }
 
-    private fun TargetDataLine.startCapture() {
+    private fun startCapture() {
         start()
         scope.launch {
             withContext(Dispatchers.IO) {
-                this@startCapture.emitPcmBytes()
+                microphone.emitPcmBytes()
             }
         }
     }
@@ -91,12 +91,12 @@ class RecordAudioService(
         }
     }
 
-    private fun TargetDataLine.stopCapture() {
-        if (isActive) {
-            stop()
+    private fun stopCapture() {
+        if (microphone.isActive) {
+            microphone.stop()
         }
-        if (isOpen) {
-            close()
+        if (microphone.isOpen) {
+            microphone.close()
         }
     }
 
