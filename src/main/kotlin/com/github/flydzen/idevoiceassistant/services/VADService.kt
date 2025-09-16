@@ -2,6 +2,7 @@ package com.github.flydzen.idevoiceassistant.services
 
 import com.github.flydzen.idevoiceassistant.vad.AmplitudeChunkSpeechEstimator
 import com.github.flydzen.idevoiceassistant.vad.ChunkSpeechEstimator
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
@@ -26,7 +27,7 @@ import java.time.format.DateTimeFormatter
 class VADService(
     private val project: Project,
     private val scope: CoroutineScope,
-) {
+): Disposable {
     val estimator: ChunkSpeechEstimator = AmplitudeChunkSpeechEstimator()
 
     private val _outputFlow = MutableStateFlow<Path?>(null)
@@ -213,7 +214,7 @@ class VADService(
         }
     }
 
-    fun dispose() {
+    override fun dispose() {
         try {
             job?.cancel()
         } catch (_: Throwable) {
