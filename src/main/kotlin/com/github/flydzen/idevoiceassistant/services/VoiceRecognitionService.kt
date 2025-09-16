@@ -1,5 +1,6 @@
 package com.github.flydzen.idevoiceassistant.services
 
+import com.github.flydzen.idevoiceassistant.executor.CommandExecutor
 import com.github.flydzen.idevoiceassistant.openai.OpenAIClient
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
@@ -26,6 +27,9 @@ class VoiceRecognitionService(private val project: Project, private val scope: C
                 if (!filePath.exists()) return@collectLatest
                 val text = OpenAIClient.speech2Text(filePath.toFile())
                 _recognizedText.emit(text)
+                val commands = OpenAIClient.textToCommands(project, text)
+                println(commands)
+                CommandExecutor().execute(commands)
             }
         }
     }
