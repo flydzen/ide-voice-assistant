@@ -1,23 +1,17 @@
 package com.github.flydzen.idevoiceassistant.openai
 
-import com.fasterxml.jackson.annotation.JsonClassDescription
-import com.fasterxml.jackson.annotation.JsonPropertyDescription
 import com.openai.client.okhttp.OpenAIOkHttpClient
 import com.openai.client.OpenAIClient
 import com.openai.core.JsonValue
 import com.openai.models.*
-import com.openai.models.chat.completions.ChatCompletionCreateParams
 import com.openai.models.responses.FunctionTool
 import com.openai.models.responses.ResponseCreateParams
-import com.openai.models.responses.ResponseFunctionToolCall
 import com.openai.models.responses.ResponseInputItem
-import com.openai.models.responses.ResponseOutputItem
-import com.openai.models.responses.Tool
 import com.openai.models.responses.ToolChoiceOptions
-import io.ktor.http.parameters
 import java.time.Duration
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
+import java.io.File
 
 
 data class Parameter(
@@ -31,12 +25,12 @@ data class Parameter(
     )
 }
 
-data class Result(
+data class CommandResult(
     val name: String,
     val params: Map<String, Any>
 )
 
-object OpenAIResponsesClient {
+object OpenAIClient {
     const val LITELLM_URL: String = "https://litellm.labs.jb.gg"
     private val LITELLM_API_KEY: String = System.getenv("LITELLM_API_KEY")
         ?: error("LITELLM_API_KEY environment variable is not set")
@@ -49,17 +43,15 @@ object OpenAIResponsesClient {
     """.trimIndent()
     private val objectMapper = jacksonObjectMapper()
 
-
-    fun createOpenAIClient(): OpenAIClient {
-        val client = OpenAIOkHttpClient.builder()
+    private val client: OpenAIClient by lazy {
+        OpenAIOkHttpClient.builder()
             .baseUrl(LITELLM_URL)
             .apiKey(LITELLM_API_KEY)
             .timeout(Duration.ofSeconds(60))
             .build()
-        return client
     }
 
-    fun function(name: String, description: String, parameters: List<Parameter>) =
+    private fun function(name: String, description: String, parameters: List<Parameter>) =
         FunctionTool.builder()
             .name(name)
             .description(description)
@@ -77,9 +69,11 @@ object OpenAIResponsesClient {
             .strict(true)
             .build()
 
-    fun run(text: String): List<Result> {
-        val client: OpenAIClient = createOpenAIClient()
+    fun speech2Text(file: File): String? {
+        return null
+    }
 
+    fun textToCommand(text: String): List<CommandResult> {
         val inputs = mutableListOf(
             ResponseInputItem.ofMessage(
                 ResponseInputItem.Message.builder()
@@ -136,7 +130,7 @@ object OpenAIResponsesClient {
             } else {
                 objectMapper.readValue(argumentsJson)
             }
-            Result(it.name(), params = argumentsMap)
+            CommandResult(it.name(), params = argumentsMap)
         }
     }
 }
