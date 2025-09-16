@@ -1,6 +1,6 @@
 package com.github.flydzen.idevoiceassistant.toolWindow
 
-import com.github.flydzen.idevoiceassistant.AssistantBundle
+import com.github.flydzen.idevoiceassistant.VoiceAssistantBundle
 import com.github.flydzen.idevoiceassistant.services.VoiceRecognitionService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IconLoader
@@ -71,7 +71,7 @@ class VoiceAssistantToolWindowFactory : ToolWindowFactory {
             val mainPanel = JBPanel<JBPanel<*>>().apply {
                 layout = BoxLayout(this, BoxLayout.Y_AXIS)
 
-                val titleLabel = JBLabel(AssistantBundle.message("assistant.toolwindow.header")).apply {
+                val titleLabel = JBLabel(VoiceAssistantBundle.message("assistant.toolwindow.header")).apply {
                     font = jetbrainsMonoBoldFont
                     foreground = JBColor(0xFFFFFF, 0x808080)
                     horizontalAlignment = SwingConstants.LEFT
