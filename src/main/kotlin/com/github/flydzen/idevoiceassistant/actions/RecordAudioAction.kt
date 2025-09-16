@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NonNls
 class RecordAudioAction : AnAction() {
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return
-        project.service<RecordAudioService>().start()
+        project.service<RecordAudioService>().toggle()
     }
 
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT

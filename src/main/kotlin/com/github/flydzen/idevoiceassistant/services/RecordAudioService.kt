@@ -52,6 +52,14 @@ class RecordAudioService(
         unlock()
     }
 
+    fun toggle() {
+        if (isActive.get()) {
+            stop()
+        } else {
+            start()
+        }
+    }
+
     private fun lock(): Boolean {
         return isActive.compareAndSet(false, true)
     }
