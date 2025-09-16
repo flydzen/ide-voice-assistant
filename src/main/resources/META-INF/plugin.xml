@@ -23,5 +23,10 @@
     <actions>
         <action id="RecordAudio"
                 class="com.github.flydzen.idevoiceassistant.actions.RecordAudioAction"/>
+        <action id="com.github.flydzen.idevoiceassistant.actions.OpenAIRunAction"
+                class="com.github.flydzen.idevoiceassistant.actions.OpenAIRunAction">
+            <add-to-group group-id="ToolsMenu" anchor="first"/>
+        </action>
     </actions>
+
 </idea-plugin>
