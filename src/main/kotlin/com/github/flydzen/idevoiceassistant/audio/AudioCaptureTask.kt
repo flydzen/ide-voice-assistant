@@ -1,5 +1,6 @@
 package com.github.flydzen.idevoiceassistant.audio
 
+import com.github.flydzen.idevoiceassistant.Config
 import com.github.flydzen.idevoiceassistant.audio.listeners.AudioListener
 import com.github.flydzen.idevoiceassistant.audio.listeners.LogListener
 import com.github.flydzen.idevoiceassistant.openai.OpenAIClient
@@ -53,9 +54,9 @@ class AudioCaptureTask(seconds: Int) {
     }
 
     private fun createMicrophone(): TargetDataLine {
-        val info = DataLine.Info(TargetDataLine::class.java, FORMAT)
+        val info = DataLine.Info(TargetDataLine::class.java, Config.audioFormat)
         val microphone = (AudioSystem.getLine(info) as TargetDataLine)
-        microphone.open(FORMAT, BUFFER_SIZE_BYTES)
+        microphone.open(Config.audioFormat, BUFFER_SIZE_BYTES)
         return microphone
     }
 
@@ -90,10 +91,10 @@ class AudioCaptureTask(seconds: Int) {
     }
 
     private fun saveWave(pcmData: ByteArray, wavFile: File) {
-        val frameSize = FORMAT.frameSize
+        val frameSize = Config.audioFormat.frameSize
         val frameLength = (pcmData.size / frameSize).toLong()
         val stream = ByteArrayInputStream(pcmData)
-        val ais = AudioInputStream(stream, FORMAT, frameLength)
+        val ais = AudioInputStream(stream, Config.audioFormat, frameLength)
         AudioSystem.write(ais, AudioFileFormat.Type.WAVE, wavFile)
     }
 
@@ -121,14 +122,6 @@ class AudioCaptureTask(seconds: Int) {
     companion object {
         private const val BUFFER_SIZE_BYTES: Int = 4096
         private const val MAX_TIME_SECONDS: Int = 60
-
-        private val FORMAT: AudioFormat = AudioFormat(
-            /* sampleRate = */ 16_000f,
-            /* sampleSizeInBits = */ 16,
-            /* channels = */ 1,
-            /* signed = */ true,
-            /* bigEndian = */ false
-        )
 
         private val LOG: Logger = thisLogger()
     }

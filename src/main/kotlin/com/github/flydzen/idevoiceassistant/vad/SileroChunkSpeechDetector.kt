@@ -177,11 +177,11 @@ package com.github.flydzen.idevoiceassistant.vad
 import ai.onnxruntime.OnnxTensor
 import ai.onnxruntime.OrtEnvironment
 import ai.onnxruntime.OrtSession
+import com.github.flydzen.idevoiceassistant.Config
 import org.slf4j.LoggerFactory
 import java.nio.FloatBuffer
 
 class SileroChunkSpeechEstimator(
-    private val sampleRate: Long = 16_000L,
     private val windowSize: Int = 512,
     private val threshold: Float = 0.5f
 ) : ChunkSpeechEstimator {
@@ -200,7 +200,7 @@ class SileroChunkSpeechEstimator(
             ?.readBytes()
             ?: error("VAD model not found in resources!")
         session = env.createSession(modelBytes)
-        srTensor = OnnxTensor.createTensor(env, sampleRate) // int64 scalar
+        srTensor = OnnxTensor.createTensor(env, Config.audioFormat.sampleSizeInBits) // int64 scalar
     }
 
     override fun isSpeech(chunk: FloatArray): Boolean {

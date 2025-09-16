@@ -1,5 +1,6 @@
 package com.github.flydzen.idevoiceassistant.services
 
+import com.github.flydzen.idevoiceassistant.Config
 import com.github.flydzen.idevoiceassistant.vad.AmplitudeChunkSpeechEstimator
 import com.github.flydzen.idevoiceassistant.vad.ChunkSpeechEstimator
 import com.intellij.openapi.Disposable
@@ -35,15 +36,9 @@ class VADService(
 
     private val LOG: Logger = thisLogger()
 
-    // Настройки аудио
-    private val sampleRate = 16_000
-    private val channels = 1
-    private val bitsPerSample = 16
-    private val bytesPerSample = bitsPerSample / 8
-
     // Окно для VAD (Silero ожидает 512 семплов при 16кГц)
     private val windowSamples = 512
-    private val windowBytes = windowSamples * bytesPerSample
+    private val windowBytes = windowSamples * Config.bytesPerSample
 
     // Сколько «окон тишины» ждём, чтобы закрыть фразу (~192 мс при 512 сэмплах)
     private val endSilenceWindows = 6
@@ -148,7 +143,7 @@ class VADService(
         try {
             val pcm = buffer.toByteArray()
             val path = createOutputPath()
-            writeWav(path, pcm, sampleRate, bitsPerSample, channels)
+            writeWav(path, pcm)
             scope.launch { _outputFlow.emit(path) }
             LOG.info("конец фразы")
             LOG.info("Фраза сохранена: $path")
@@ -181,15 +176,9 @@ class VADService(
         return out
     }
 
-    private fun writeWav(
-        path: Path,
-        pcmLe: ByteArray,
-        sampleRate: Int,
-        bitsPerSample: Int,
-        channels: Int
-    ) {
-        val byteRate = sampleRate * channels * bitsPerSample / 8
-        val blockAlign = channels * bitsPerSample / 8
+    private fun writeWav(path: Path, pcmLe: ByteArray) {
+        val byteRate = Config.audioFormat.sampleRate * Config.audioFormat.channels * Config.bytesPerSample
+        val blockAlign = Config.audioFormat.channels * Config.bytesPerSample
         val dataSize = pcmLe.size
         val chunkSize = 36 + dataSize
 
@@ -200,11 +189,11 @@ class VADService(
         header.put("fmt ".toByteArray(Charsets.US_ASCII))
         header.putInt(16)                  // PCM subchunk size
         header.putShort(1)                 // Audio format 1 = PCM
-        header.putShort(channels.toShort())
-        header.putInt(sampleRate)
-        header.putInt(byteRate)
+        header.putShort(Config.audioFormat.channels.toShort())
+        header.putInt(Config.audioFormat.sampleRate.toInt())
+        header.putInt(byteRate.toInt())
         header.putShort(blockAlign.toShort())
-        header.putShort(bitsPerSample.toShort())
+        header.putShort(Config.audioFormat.sampleSizeInBits.toShort())
         header.put("data".toByteArray(Charsets.US_ASCII))
         header.putInt(dataSize)
 
