@@ -33,11 +33,11 @@ class VoiceRecognitionService(private val project: Project, private val scope: C
         recognitionJob = scope.launch {
             try {
                 // For now, simulate recognition with delay
-                val record = project.service<RecordAudioService>()
-                record.start(AudioCaptureTask(4))
-
-                val vad = VadService.getInstance()
-                vad.startListening(record.inputFlow)
+//                val record = project.service<RecordAudioService>()
+//                record.start(AudioCaptureTask(4))
+//
+//                val vad = VadService.getInstance()
+//                vad.startListening(record.inputFlow)
 
                 delay(500)
 

@@ -40,19 +40,23 @@ class VADService(
     private val bitsPerSample = 16
     private val bytesPerSample = bitsPerSample / 8
 
-    // Фрейм ~10мс при 16кГц
-    private val frameSamples = 160
-    private val frameBytes = frameSamples * bytesPerSample
+    // Окно для VAD (Silero ожидает 512 семплов при 16кГц)
+    private val windowSamples = 512
+    private val windowBytes = windowSamples * bytesPerSample
 
-    // Гистерезис VAD на уровне детектора
-    private val endSilenceFrames = 20 // ~200мс тишины для завершения фразы
+    // Сколько «окон тишины» ждём, чтобы закрыть фразу (~192 мс при 512 сэмплах)
+    private val endSilenceWindows = 6
 
     private var job: Job? = null
 
-    // Буферизация входных байт в кадры
-    private val frameBuf = ByteArray(frameBytes)
-    private var frameFill = 0
-    private var pendingLo: Byte? = null // для сборки int16 из потока байт
+    // Буферизация входных СЕМПЛОВ и исходных байтов на размер окна
+    private val windowFloat = FloatArray(windowSamples)
+    private var windowFloatFill = 0
+    private val windowRaw = ByteArray(windowBytes)
+    private var windowRawFill = 0
+
+    // Для сборки PCM16LE семплов из байтов
+    private var pendingLo: Byte? = null
 
     // Состояние фразы
     private var inSpeech = false
@@ -81,39 +85,54 @@ class VADService(
             pendingLo = b
             return
         }
-        // собрали 2 байта -> кладём в frameBuf
-        frameBuf[frameFill++] = lo
-        frameBuf[frameFill++] = b
+        // Собрали один 16-битный семпл (LE)
+        val hi = b
+        val loInt = lo.toInt() and 0xFF
+        val hiInt = hi.toInt()
+        val s = ((hiInt shl 8) or loInt).toShort().toInt()
+        val sampleFloat = if (s >= 0) s / 32767f else s / 32768f
+
+        // Пишем исходные байты в окно
+        if (windowRawFill + 2 <= windowRaw.size) {
+            windowRaw[windowRawFill++] = lo
+            windowRaw[windowRawFill++] = hi
+        }
+
+        // Пишем нормализованный семпл в окно
+        if (windowFloatFill < windowFloat.size) {
+            windowFloat[windowFloatFill++] = sampleFloat
+        }
+
         pendingLo = null
 
-        if (frameFill >= frameBytes) {
-            // есть полный кадр, обрабатываем
-            val floats = i16LeBlockToFloat(frameBuf, frameFill)
-            processFrame(floats, frameBuf, 0, frameFill)
-            frameFill = 0
+        // Когда окно заполнено — проверяем
+        if (windowFloatFill >= windowSamples) {
+            processWindow(windowFloat, windowRaw, windowRawFill)
+            windowFloatFill = 0
+            windowRawFill = 0
         }
     }
 
-    private fun processFrame(floatFrame: FloatArray, rawBytes: ByteArray, off: Int, len: Int) {
-        val speech = estimator.isSpeech(floatFrame)
+    private fun processWindow(floatWindow: FloatArray, rawBytes: ByteArray, rawLen: Int) {
+        val speech = estimator.isSpeech(floatWindow)
 
         if (!inSpeech) {
             if (speech) {
                 inSpeech = true
                 silenceCounter = 0
-                phraseBuffer = ByteArrayOutputStream().also { it.write(rawBytes, off, len) }
+                phraseBuffer = ByteArrayOutputStream().also { it.write(rawBytes, 0, rawLen) }
                 LOG.info("начало фразы")
             } else {
                 // тишина, остаёмся вне речи
             }
         } else {
-            // речь активна — добавляем в фразу и проверяем окончание
-            phraseBuffer?.write(rawBytes, off, len)
+            // речь активна — добавляем исходные байты окна и проверяем окончание
+            phraseBuffer?.write(rawBytes, 0, rawLen)
             if (speech) {
                 silenceCounter = 0
             } else {
                 silenceCounter++
-                if (silenceCounter >= endSilenceFrames) {
+                if (silenceCounter >= endSilenceWindows) {
                     finishPhrase()
                     inSpeech = false
                     silenceCounter = 0
