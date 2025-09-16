@@ -17,6 +17,7 @@
     <extensions defaultExtensionNs="com.intellij">
         <toolWindow factoryClass="com.github.flydzen.idevoiceassistant.toolWindow.VoiceAssistantToolWindowFactory" id="Voice Assistant" anchor="right" icon="AllIcons.General.User"/>
         <postStartupActivity implementation="com.github.flydzen.idevoiceassistant.startup.MyProjectActivity" />
+        <notificationGroup id="Voice Assistant" displayType="BALLOON" isLogByDefault="true"/>
     </extensions>
 
     <actions>

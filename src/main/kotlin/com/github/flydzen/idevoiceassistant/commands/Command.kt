@@ -1,9 +1,12 @@
 package com.github.flydzen.idevoiceassistant.commands
 
+import com.github.flydzen.idevoiceassistant.VoiceAssistantBundle
+import com.github.flydzen.idevoiceassistant.codeGeneration.AICodeGenActionsExecutor
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.MessageType
 import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.openapi.vfs.VirtualFile
@@ -89,33 +92,56 @@ sealed class Command {
         }
     }
 
-    class Codegen(val prompt: String) : Command() {
+    class Codegen(private val prompt: String) : Command() {
         override fun process() {
-            TODO("Not yet implemented")
+            invokeLater {
+                AICodeGenActionsExecutor.generateCode(prompt)
+            }
         }
     }
 
-    class IdeaCommand(val ideaCommand: String) : Command() {
+    class NotificationCommand(val project: Project) : Command() {
         override fun process() {
-            TODO("Not yet implemented")
+            com.intellij.notification.NotificationGroupManager.getInstance()
+                .getNotificationGroup("Voice Assistant")
+                .createNotification(
+                    VoiceAssistantBundle.message("notification.command.not.recognized"),
+                    MessageType.WARNING
+                )
+                .notify(project)
         }
     }
 
-    class Cancel : Command() {
+    class Cancel(val project: Project) : Command() {
         override fun process() {
-            TODO("Not yet implemented")
+            invokeLater {
+                val editor = project.editor() ?: return@invokeLater
+                AICodeGenActionsExecutor.discard(editor)
+            }
+            // TODO: cancel other commands
         }
     }
 
-    class Approve : Command() {
+    class Approve(val project: Project) : Command() {
         override fun process() {
-            TODO("Not yet implemented")
+            invokeLater {
+                val editor = project.editor() ?: return@invokeLater
+                AICodeGenActionsExecutor.acceptAllChanges(editor)
+            }
+            // TODO: approve other commands
         }
     }
 
-    class Stop : Command() {
+    class Stop(val project: Project) : Command() {
         override fun process() {
-            TODO("Not yet implemented")
+            invokeLater {
+                val editor = project.editor() ?: return@invokeLater
+                AICodeGenActionsExecutor.stop(editor)
+            }
+            // TODO: stop other commands
         }
     }
+
+    fun Project.editor(): com.intellij.openapi.editor.Editor? =
+        FileEditorManager.getInstance(this).selectedTextEditor
 }

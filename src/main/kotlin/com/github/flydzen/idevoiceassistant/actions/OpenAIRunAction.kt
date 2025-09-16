@@ -1,5 +1,6 @@
 package com.github.flydzen.idevoiceassistant.actions
 
+import com.github.flydzen.idevoiceassistant.executor.CommandExecutor
 import com.github.flydzen.idevoiceassistant.openai.OpenAIClient
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -28,8 +29,9 @@ class OpenAIRunAction : AnAction("Run OpenAI Voice Assistant") {
 
         ApplicationManager.getApplication().executeOnPooledThread {
             try {
-                val result = OpenAIClient.textToCommand(textToProcess)
-                println(result)
+                val commands = OpenAIClient.textToCommands(project, textToProcess)
+                println(commands)
+                CommandExecutor().execute(commands)
             } catch (e: Exception) {
                 ApplicationManager.getApplication().invokeLater {
                     Messages.showErrorDialog(

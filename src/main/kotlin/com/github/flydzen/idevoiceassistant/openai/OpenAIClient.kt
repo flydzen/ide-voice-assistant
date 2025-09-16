@@ -11,6 +11,9 @@ import com.openai.models.responses.ToolChoiceOptions
 import java.time.Duration
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
+import com.github.flydzen.idevoiceassistant.commands.AssistantCommand
+import com.github.flydzen.idevoiceassistant.commands.Command
+import com.intellij.openapi.project.Project
 import com.openai.models.audio.AudioModel
 import com.openai.models.audio.AudioResponseFormat
 import com.openai.models.audio.transcriptions.TranscriptionCreateParams
@@ -101,35 +104,20 @@ object OpenAIClient {
             ),
         )
 
-        val params = ResponseCreateParams.builder()
+        val builder = ResponseCreateParams.builder()
             .model(ResponsesModel.ofString("openai/gpt-5-nano"))
             .reasoning(Reasoning.builder().effort(ReasoningEffort.LOW).build())
             .input(ResponseCreateParams.Input.ofResponse(inputs))
-            .addTool(
+        AssistantCommand.entries.forEach { cmd ->
+            builder.addTool(
                 function(
-                    name="insert",
-                    description = "Insert text at the cursor",
-                    parameters = listOf(
-                        Parameter("text", "string", "Text to insert")
-                    )
+                    name = cmd.toolName,
+                    description = cmd.description,
+                    parameters = cmd.parameters
                 )
             )
-            .addTool(
-                function(
-                    name="generate",
-                    description = "Generate code/content from instructions",
-                    parameters = listOf(
-                        Parameter("prompt", "string", "Prompt for code generation")
-                    ),
-                )
-            )
-            .addTool(
-                function(
-                    name="idontknow",
-                    description = "if you don't know what to do",
-                    parameters = listOf(),
-                )
-            )
+        }
+        val params = builder
             .toolChoice(ToolChoiceOptions.REQUIRED)
             .build()
         val response = client.responses().create(params)
@@ -143,5 +131,10 @@ object OpenAIClient {
             }
             CommandResult(it.name(), params = argumentsMap)
         }
+    }
+
+    fun textToCommands(project: Project, text: String): List<Command> {
+        val results = textToCommand(text)
+        return results.mapNotNull { AssistantCommand.toDomainCommand(project, it) }
     }
 }
