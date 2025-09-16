@@ -43,7 +43,7 @@ class VADService(
     private val windowBytes = windowSamples * Config.bytesPerSample
 
     // Сколько «окон тишины» ждём, чтобы закрыть фразу (~192 мс при 512 сэмплах)
-    private val endSilenceWindows = 6
+    private val endSilenceWindows = 16
 
     // Буферизация входных СЕМПЛОВ и исходных байтов на размер окна
     private val windowFloat = FloatArray(windowSamples)
@@ -118,10 +118,9 @@ class VADService(
     private suspend fun processWindow(floatWindow: FloatArray, rawBytes: ByteArray, rawLen: Int) {
 
         val probability = estimator.getProbability(floatWindow)
-        val speech = probability > 0.05f
+        val speech = probability > 0.5f
         _volumeLevel.emit(probability)
 
-        println("Prob $probability")
         if (!inSpeech) {
             if (speech) {
                 inSpeech = true

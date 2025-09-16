@@ -78,7 +78,6 @@ object OpenAIClient {
             .build()
 
     fun speech2Text(file: File): String {
-        return "create function that prints hello"
         val response = client.audio().transcriptions().create(
             TranscriptionCreateParams.builder()
                 .model(AudioModel.WHISPER_1)

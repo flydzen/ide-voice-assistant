@@ -85,7 +85,7 @@ class RecordAudioService(
     }
 
     private suspend fun emitPcmBytes() {
-        val buffer = ByteArray(1024)
+        val buffer = ByteArray(1024*2)
         try {
             while (this@RecordAudioService.isActive.get()) {
                 val n = microphone.read(buffer, 0, buffer.size)
@@ -93,7 +93,7 @@ class RecordAudioService(
                     LOG.debug("No data from microphone (n=$n)")
                     continue
                 }
-                inputChannel.send(buffer)
+                inputChannel.send(buffer.copyOf(n))
             }
         } catch (t: Throwable) {
             LOG.warn("Capture read interrupted: ${t.message}")
