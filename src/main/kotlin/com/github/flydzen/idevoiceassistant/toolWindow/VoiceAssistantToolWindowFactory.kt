@@ -62,12 +62,15 @@ class VoiceAssistantToolWindowFactory : ToolWindowFactory {
 
             scope.launch {
                 project.service<VADService>().volumeLevel.collectLatest { volume ->
+                    if (!_active) {
+                        volumeBar.setVolume(0f)
+                        return@collectLatest
+                    }
                     SwingUtilities.invokeLater {
                         volumeBar.setVolume(volume)
                     }
                 }
             }
-
         }
 
         private val jetbrainsMonoFont = Font("JetBrains Mono", Font.PLAIN, 15)
@@ -119,6 +122,7 @@ class VoiceAssistantToolWindowFactory : ToolWindowFactory {
                                 stopAnimation()
                                 icon = VOICE_ASSISTANT_ICON
                                 project.service<VoiceRecognitionService>().stopRecognition()
+                                volumeBar.setVolume(0f)
                             }
                         }
                     }
@@ -251,8 +255,6 @@ class VoiceAssistantToolWindowFactory : ToolWindowFactory {
                 val g2d = g as Graphics2D
                 g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
 
-                val width = width
-                val height = height
                 val margin = 2
 
                 g2d.color = JBColor(0x3C3F41, 0x2B2B2B)
@@ -277,8 +279,6 @@ class VoiceAssistantToolWindowFactory : ToolWindowFactory {
                 g2d.drawRoundRect(0, 0, width - 1, height - 1, 4, 4)
             }
         }
-
-
 
         companion object {
             private val ACTIVE_ICONS = listOf(
