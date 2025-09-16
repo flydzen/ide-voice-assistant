@@ -6,10 +6,9 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-import kotlin.coroutines.cancellation.CancellationException
 
 @Service(Service.Level.PROJECT)
-class VoiceRecognitionService(private val project: Project, private val scope: CoroutineScope): Disposable {
+class VoiceRecognitionService(private val project: Project, private val scope: CoroutineScope) : Disposable {
 
     private val _recognizedText = MutableSharedFlow<String>()
     val recognizedText: SharedFlow<String> = _recognizedText.asSharedFlow()
@@ -31,7 +30,7 @@ class VoiceRecognitionService(private val project: Project, private val scope: C
         recognitionJob = scope.launch {
             // For now, simulate recognition with delay
 //                val record = project.service<RecordAudioService>()
-//                record.start(AudioCaptureTask(4))
+//                record.start()
 //
 //                val vad = VadService.getInstance()
 //                vad.startListening(record.inputFlow)
