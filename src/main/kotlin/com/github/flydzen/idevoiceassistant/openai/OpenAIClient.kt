@@ -79,7 +79,7 @@ object OpenAIClient {
                 .model(AudioModel.WHISPER_1)
                 .prompt("This is a user input to control Code Editor.")
                 .responseFormat(AudioResponseFormat.TEXT)
-                .file(file.inputStream())
+                .file(file.toPath())
                 .build()
         )
         return response.asTranscription().text()
@@ -132,7 +132,6 @@ object OpenAIClient {
             )
             .toolChoice(ToolChoiceOptions.REQUIRED)
             .build()
-        println(params)
         val response = client.responses().create(params)
         val result = response.output().filter { it.isFunctionCall() }.map { it.asFunctionCall() }
         return result.map {

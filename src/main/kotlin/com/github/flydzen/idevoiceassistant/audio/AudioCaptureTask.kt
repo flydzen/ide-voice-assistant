@@ -2,6 +2,7 @@ package com.github.flydzen.idevoiceassistant.audio
 
 import com.github.flydzen.idevoiceassistant.audio.listeners.AudioListener
 import com.github.flydzen.idevoiceassistant.audio.listeners.LogListener
+import com.github.flydzen.idevoiceassistant.openai.OpenAIClient
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.thisLogger
 import kotlinx.coroutines.*
@@ -44,6 +45,11 @@ class AudioCaptureTask(seconds: Int) {
             microphone.stopCapture()
             triggerOnStop()
         }
+
+        val text = OpenAIClient.speech2Text(tempFile)
+        println("text: $text")
+        val command = OpenAIClient.textToCommand(text)
+        println("command: $command")
     }
 
     private fun createMicrophone(): TargetDataLine {

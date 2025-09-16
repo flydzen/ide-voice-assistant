@@ -12,7 +12,7 @@ class RecordAudioAction : AnAction() {
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return
         project.service<RecordAudioService>().execute {
-            AudioCaptureTask(30).run()
+            AudioCaptureTask(4).run()
         }
     }
 
