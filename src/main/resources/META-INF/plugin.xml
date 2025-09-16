@@ -5,8 +5,13 @@
     <vendor>flydzen</vendor>
 
     <depends>com.intellij.modules.platform</depends>
+    <depends>IdeaVIM</depends>
 
     <resource-bundle>messages.MyBundle</resource-bundle>
+    
+    <actions>
+        <action id="ExecuteVimScriptAction" class="com.github.flydzen.idevoiceassistant.actions.ExecuteVimScriptAction"/>
+    </actions>
 
     <extensions defaultExtensionNs="com.intellij">
         <toolWindow factoryClass="com.github.flydzen.idevoiceassistant.toolWindow.MyToolWindowFactory" id="MyToolWindow"/>
