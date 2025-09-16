@@ -72,16 +72,16 @@ class RecordAudioService(
         start()
         scope.launch {
             withContext(Dispatchers.IO) {
-                microphone.emitPcmBytes()
+                emitPcmBytes()
             }
         }
     }
 
-    private suspend fun TargetDataLine.emitPcmBytes() {
+    private suspend fun emitPcmBytes() {
         val buffer = ByteArray(8192)
         try {
             while (this@RecordAudioService.isActive.get()) {
-                val n = read(buffer, 0, buffer.size)
+                val n = microphone.read(buffer, 0, buffer.size)
                 if (n <= 0) break
                 buffer.forEach { byte -> _inputFlow.emit(byte) }
             }
