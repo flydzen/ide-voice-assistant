@@ -81,7 +81,7 @@ class VADService(
         }
     }
 
-    private fun onByte(b: Byte) {
+    private suspend fun onByte(b: Byte) {
         val lo = pendingLo
         if (lo == null) {
             pendingLo = b
@@ -115,7 +115,7 @@ class VADService(
         }
     }
 
-    private fun processWindow(floatWindow: FloatArray, rawBytes: ByteArray, rawLen: Int) {
+    private suspend fun processWindow(floatWindow: FloatArray, rawBytes: ByteArray, rawLen: Int) {
         val speech = estimator.isSpeech(floatWindow)
 
         val probability = estimator.getProbability(floatWindow)
@@ -146,14 +146,14 @@ class VADService(
         }
     }
 
-    private fun finishPhrase() {
+    private suspend fun finishPhrase() {
         val buffer = phraseBuffer ?: return
         phraseBuffer = null
         try {
             val pcm = buffer.toByteArray()
             val path = createOutputPath()
             writeWav(path, pcm)
-            scope.launch { outputChannel.send(path) }
+            outputChannel.send(path)
             LOG.info("конец фразы")
             LOG.info("Фраза сохранена: $path")
         } catch (e: Throwable) {
