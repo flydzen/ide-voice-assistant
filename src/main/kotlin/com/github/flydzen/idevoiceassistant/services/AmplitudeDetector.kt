@@ -9,6 +9,8 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.launch
@@ -27,6 +29,9 @@ class AmplitudeDetector(
     private val scope: CoroutineScope,
 ) {
     val estimator: ChunkSpeechEstimator = AmplitudeChunkSpeechEstimator()
+
+    private val _outputFlow = MutableStateFlow<Path?>(null)
+    val outputFlow = _outputFlow.asSharedFlow()
 
     private val LOG: Logger = thisLogger()
 
@@ -125,6 +130,7 @@ class AmplitudeDetector(
             val pcm = buffer.toByteArray()
             val path = createOutputPath()
             writeWav(path, pcm, sampleRate, bitsPerSample, channels)
+            _outputFlow.value = path
             LOG.info("конец фразы")
             LOG.info("Фраза сохранена: $path")
         } catch (e: Throwable) {
