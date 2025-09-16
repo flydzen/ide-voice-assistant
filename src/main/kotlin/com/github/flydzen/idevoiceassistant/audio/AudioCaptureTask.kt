@@ -99,11 +99,11 @@ class AudioCaptureTask(seconds: Int) {
         private const val MAX_TIME_SECONDS: Int = 60
 
         private val FORMAT: AudioFormat = AudioFormat(
-            /* sampleRate = */ 48_000f,
+            /* sampleRate = */ 16_000f,
             /* sampleSizeInBits = */ 16,
             /* channels = */ 1,
             /* signed = */ true,
-            /* bigEndian = */ true
+            /* bigEndian = */ false
         )
 
         private val LOG: Logger = thisLogger()
