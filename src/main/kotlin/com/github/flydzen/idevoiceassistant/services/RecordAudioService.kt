@@ -1,6 +1,6 @@
 package com.github.flydzen.idevoiceassistant.services
 
-import com.github.flydzen.idevoiceassistant.MyBundle
+import com.github.flydzen.idevoiceassistant.AudioBundle
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.thisLogger
@@ -18,7 +18,7 @@ class RecordAudioService(private val project: Project, private val scope: Corout
         scope.launch {
             if (mutex.tryLock()) {
                 try {
-                    withBackgroundProgress(project, MyBundle.message("recording.audio")) {
+                    withBackgroundProgress(project, AudioBundle.message("recording.audio")) {
                         action()
                     }
                 } finally {
