@@ -6,6 +6,8 @@ import com.github.flydzen.idevoiceassistant.openai.OpenAIClient
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.thisLogger
 import kotlinx.coroutines.*
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
 import java.io.File
 import java.util.concurrent.TimeUnit
 import javax.sound.sampled.*
@@ -31,16 +33,14 @@ class AudioCaptureTask(seconds: Int) {
         val stopper = launch {
             delay(duration)
             microphone.stopCapture()
-            triggerOnStop()
         }
 
         try {
-            microphone.startCapture(tempFile)
             triggerOnStart()
-        } catch(e: Exception) {
+            microphone.startCapture(tempFile)
+        } catch (e: Exception) {
             triggerOnError(e)
-        }
-        finally {
+        } finally {
             stopper.cancel()
             microphone.stopCapture()
             triggerOnStop()
@@ -67,10 +67,34 @@ class AudioCaptureTask(seconds: Int) {
 
     private suspend fun TargetDataLine.startCapture(file: File) {
         start()
-        val out = AudioInputStream(this)
         withContext(Dispatchers.IO) {
-            AudioSystem.write(out, AudioFileFormat.Type.WAVE, file)
+            val pcmData = this@startCapture.retrievePcmArray()
+            saveWave(pcmData, file)
         }
+    }
+
+    private fun TargetDataLine.retrievePcmArray(): ByteArray {
+        val buffer = ByteArray(8192)
+        val out = ByteArrayOutputStream()
+        try {
+            while (true) {
+                val n = read(buffer, 0, buffer.size)
+                if (n <= 0) break
+                out.write(buffer, 0, n)
+            }
+        } catch (t: Throwable) {
+            LOG.warn("Capture read interrupted: ${t.message}")
+            triggerOnError(t)
+        }
+        return out.toByteArray()
+    }
+
+    private fun saveWave(pcmData: ByteArray, wavFile: File) {
+        val frameSize = FORMAT.frameSize
+        val frameLength = (pcmData.size / frameSize).toLong()
+        val stream = ByteArrayInputStream(pcmData)
+        val ais = AudioInputStream(stream, FORMAT, frameLength)
+        AudioSystem.write(ais, AudioFileFormat.Type.WAVE, wavFile)
     }
 
     private fun TargetDataLine.stopCapture() {
