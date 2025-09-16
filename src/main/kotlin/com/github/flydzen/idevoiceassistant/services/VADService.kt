@@ -148,7 +148,7 @@ class VADService(
             val pcm = buffer.toByteArray()
             val path = createOutputPath()
             writeWav(path, pcm, sampleRate, bitsPerSample, channels)
-            _outputFlow.value = path
+            scope.launch { _outputFlow.emit(path) }
             LOG.info("конец фразы")
             LOG.info("Фраза сохранена: $path")
         } catch (e: Throwable) {
@@ -218,5 +218,9 @@ class VADService(
             job?.cancel()
         } catch (_: Throwable) {
         }
+    }
+
+    companion object {
+        fun getInstance(project: Project): VADService = project.service()
     }
 }
