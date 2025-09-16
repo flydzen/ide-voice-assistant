@@ -5,7 +5,7 @@ import com.intellij.ml.llm.codeGeneration.AICodeGenerationUtils
 import com.intellij.ml.llm.codeGeneration.actions.AskAiAssistantInEditorAction
 import com.intellij.ml.llm.codeGeneration.diff.getAIInEditorDiffViewer
 import com.intellij.ml.llm.codeGeneration.inplace.AIDiffBasedCodeGenerationInteraction.Companion.REGENERATE_AS_CODE
-import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.Disposer
@@ -13,9 +13,10 @@ import com.intellij.openapi.util.Disposer
 
 object AICodeGenActionsExecutor {
 
-    fun generateCode(e: AnActionEvent) {
+    fun generateCode(promptText: String) {
+        AutoCodeGenerationListener.promptText = promptText
         val action = AskAiAssistantInEditorAction()
-        action.actionPerformed(e)
+        ActionManager.getInstance().tryToExecute(action, null, null, null, true)
     }
 
     fun acceptAllChanges(editor: Editor) {
