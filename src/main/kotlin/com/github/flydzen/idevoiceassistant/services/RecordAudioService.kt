@@ -18,11 +18,17 @@ import javax.sound.sampled.DataLine
 import javax.sound.sampled.TargetDataLine
 
 @Service(Service.Level.PROJECT)
-class RecordAudioService(private val project: Project, private val scope: CoroutineScope) {
+class RecordAudioService(
+    @Suppress("unused") private val project: Project,
+    private val scope: CoroutineScope
+) {
     private val isActive = AtomicBoolean(false)
 
     @Volatile
     private var listeners: MutableList<AudioListener> = mutableListOf()
+
+    @get:Synchronized
+    private val microphone = createMicrophone()
 
     private val _inputFlow = MutableStateFlow<Byte?>(null)
     val inputFlow = _inputFlow.asSharedFlow()
@@ -33,21 +39,17 @@ class RecordAudioService(private val project: Project, private val scope: Corout
             return
         }
 
-        val microphone = createMicrophone()
-
         try {
             triggerOnStart()
             microphone.startCapture()
         } catch (e: Exception) {
             triggerOnError(e)
-        } finally {
-            microphone.stopCapture()
-            triggerOnStop()
-            unlock()
         }
     }
 
     fun stop() {
+        microphone.stopCapture()
+        triggerOnStop()
         unlock()
     }
 
