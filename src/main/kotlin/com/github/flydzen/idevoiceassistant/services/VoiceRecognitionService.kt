@@ -22,6 +22,8 @@ class VoiceRecognitionService(private val project: Project, private val scope: C
     private var recognitionJob: Job? = null
 
     fun startRecognition() {
+        project.service<RecordAudioService>().start()
+
         if (_isRecognitionActive.value) {
             return
         }
@@ -32,7 +34,7 @@ class VoiceRecognitionService(private val project: Project, private val scope: C
             try {
                 // For now, simulate recognition with delay
                 val record = project.service<RecordAudioService>()
-                record.execute { AudioCaptureTask(4).run() }
+                record.start(AudioCaptureTask(4))
 
                 val vad = VadService.getInstance()
                 vad.startListening(record.inputFlow)

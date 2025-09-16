@@ -11,9 +11,7 @@ import org.jetbrains.annotations.NonNls
 class RecordAudioAction : AnAction() {
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return
-        project.service<RecordAudioService>().execute {
-            AudioCaptureTask(4).run()
-        }
+        project.service<RecordAudioService>().start(AudioCaptureTask(4))
     }
 
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT

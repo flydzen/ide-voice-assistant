@@ -1,17 +1,15 @@
 package com.github.flydzen.idevoiceassistant.services
 
-import com.github.flydzen.idevoiceassistant.VoiceAssistantBundle
+import com.github.flydzen.idevoiceassistant.audio.AudioCaptureTask
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
-import com.intellij.platform.ide.progress.withBackgroundProgress
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Mutex
 import java.util.concurrent.atomic.AtomicBoolean
 
 @Service(Service.Level.PROJECT)
@@ -21,28 +19,23 @@ class RecordAudioService(private val project: Project, private val scope: Corout
     private val _inputFlow = MutableStateFlow<Byte?>(null)
     val inputFlow = _inputFlow.asSharedFlow()
 
-    private val mutex = Mutex()
-
     private var captureJob: Job? = null
 
-    fun execute(action: suspend () -> Unit) {
-        scope.launch {
-            if (mutex.tryLock()) {
-                try {
-                    withBackgroundProgress(project, VoiceAssistantBundle.message("recording.audio")) {
-                        action()
-                    }
-                } finally {
-                    mutex.unlock()
-                }
-            } else {
-                LOG.warn("RecordAudioService is busy")
-            }
+    fun start(task: AudioCaptureTask? = null) {
+        if (!lock()) {
+            LOG.warn("RecordAudioService is already active")
+            return
+        }
+        captureJob = scope.launch {
+            val audioTask = task ?: AudioCaptureTask(4)
+            audioTask.run()
         }
     }
 
     fun stop() {
-
+        captureJob?.cancel()
+        captureJob = null
+        unlock()
     }
 
     private fun lock(): Boolean {
