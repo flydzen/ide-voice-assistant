@@ -70,10 +70,13 @@ class VADService(
                 .inputChannel
                 .receiveAsFlow()
                 .collect { b ->
-                    if (fullBufferFill < fullBuffer.size) {
-                        fullBuffer[fullBufferFill++] = b
+                    b.forEach {
+                        onByte(it)
+                        if (fullBufferFill < fullBuffer.size) {
+                            fullBuffer[fullBufferFill++] = it
+                        }
                     }
-                    onByte(b)
+//                    onByte(b)
                 }
         }
     }
@@ -115,7 +118,7 @@ class VADService(
     private suspend fun processWindow(floatWindow: FloatArray, rawBytes: ByteArray, rawLen: Int) {
 
         val probability = estimator.getProbability(floatWindow)
-        val speech = probability > 0.4f
+        val speech = probability > 0.05f
         _volumeLevel.emit(probability)
 
         println("Prob $probability")

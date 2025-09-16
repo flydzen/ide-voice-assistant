@@ -30,7 +30,7 @@ class RecordAudioService(
     @get:Synchronized
     private val microphone = createMicrophone()
 
-    val inputChannel = Channel<Byte>(capacity = Channel.BUFFERED, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    val inputChannel = Channel<ByteArray>(capacity = Channel.BUFFERED, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
     fun start() {
         if (!lock()) {
@@ -85,7 +85,7 @@ class RecordAudioService(
     }
 
     private suspend fun emitPcmBytes() {
-        val buffer = ByteArray(8192)
+        val buffer = ByteArray(1024)
         try {
             while (this@RecordAudioService.isActive.get()) {
                 val n = microphone.read(buffer, 0, buffer.size)
@@ -93,9 +93,7 @@ class RecordAudioService(
                     LOG.debug("No data from microphone (n=$n)")
                     continue
                 }
-                for (i in 0 until n) {
-                    inputChannel.send(buffer[i])
-                }
+                inputChannel.send(buffer)
             }
         } catch (t: Throwable) {
             LOG.warn("Capture read interrupted: ${t.message}")
