@@ -71,7 +71,7 @@ class RecordAudioService(
     private fun createMicrophone(): TargetDataLine {
         val info = DataLine.Info(TargetDataLine::class.java, Config.audioFormat)
         val microphone = (AudioSystem.getLine(info) as TargetDataLine)
-        microphone.open(Config.audioFormat, BUFFER_SIZE_BYTES)
+        microphone.open(Config.audioFormat, Config.BUFFER_SIZE_BYTES)
         return microphone
     }
 
@@ -85,7 +85,7 @@ class RecordAudioService(
     }
 
     private suspend fun emitPcmBytes() {
-        val buffer = ByteArray(1024 * 2)
+        val buffer = ByteArray(Config.BUFFER_SIZE_BYTES)
         val output = mutableListOf<Byte>()
         try {
             while (this@RecordAudioService.isActive.get()) {
@@ -133,7 +133,5 @@ class RecordAudioService(
 
     companion object {
         private val LOG: Logger = thisLogger()
-
-        private const val BUFFER_SIZE_BYTES: Int = 4096
     }
 }
