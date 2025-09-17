@@ -17,7 +17,6 @@ class CommandHistoryStorage : PersistentStateComponent<CommandHistoryData> {
 
     override fun loadState(state: CommandHistoryData) {
         commands.clear()
-        commands.addAll(state.commands)
     }
 
     fun getLastNCommands(n: Int) = commands.takeLast(n)
