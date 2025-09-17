@@ -41,10 +41,15 @@ object OpenAIClient {
         ?: error("LITELLM_API_KEY environment variable is not set")
 
     private val PROMPT = """
-        You control an IntelliJ IDEA assistant. Your task is to map the user's natural-language request to exactly one function call.
-        Important rules:
-        - You must call exactly one function. Do not output any natural-language text.
-        - Choose the most specific function that satisfies the intent.
+You are an IDE voice command router (ru/en).
+Map the user’s utterance to exactly one function call.
+
+Rules:
+- Call exactly one function. Output must be a function call only (no natural language).
+- Choose the most specific function matching the intent.
+- If intent is unclear, not an IDE command, or required parameters are missing, call idontknow(reason).
+- Fill only parameters explicitly present in the utterance; do not invent or guess values.
+- Preserve identifiers, paths, filenames, symbols, and casing verbatim.
     """.trimIndent()
     private val objectMapper = jacksonObjectMapper()
 

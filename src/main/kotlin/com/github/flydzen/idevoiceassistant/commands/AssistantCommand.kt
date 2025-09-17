@@ -35,7 +35,7 @@ enum class AssistantCommand(
     ),
 
     EDITOR_NAVIGATE(
-        toolName = "editorNavigate",
+        toolName = "fileNavigate",
         description = "Open file in editor",
         parameters = listOf(
             Parameter("fileName", "string", "File name to open (e.g., MyClass.kt)")
@@ -76,9 +76,11 @@ enum class AssistantCommand(
     IDONTKNOW(
         toolName = "idontknow",
         description = "If you don't know what to do",
-        parameters = emptyList(),
-        build = { project, _ ->
-            Command.NotificationCommand(project)
+        parameters = listOf(
+            Parameter("reason", "string", "The reason you don't know")
+        ),
+        build = { project, params ->
+            Command.NotificationCommand(params["reason"] as String, project)
         }
     );
 

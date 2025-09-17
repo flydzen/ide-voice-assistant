@@ -4,7 +4,7 @@
     <ExternalSystemSettings>
       <option name="env">
         <map>
-          <entry key="LITELLM_API_KEY" value="sk-S1AEiZ83TJ4cbH1gVPdDvA" />
+          <entry key="LITELLM_API_KEY" value="" />
         </map>
       </option>
       <option name="executionName" />

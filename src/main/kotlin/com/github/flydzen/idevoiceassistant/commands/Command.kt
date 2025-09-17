@@ -104,9 +104,9 @@ sealed class Command {
         }
     }
 
-    class NotificationCommand(val project: Project) : Command() {
+    class NotificationCommand(private val text: String, val project: Project) : Command() {
         override fun process() {
-            showNotification(project, VoiceAssistantBundle.message("notification.command.not.recognized"))
+            showNotification(project, "Not recognized: $text")
         }
     }
 
