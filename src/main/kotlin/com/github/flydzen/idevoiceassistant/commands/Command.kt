@@ -308,6 +308,8 @@ sealed class Command {
                 val editor = fileEditorManager.selectedTextEditor ?: return@invokeLater
                 rollbackData = collectEditorRollbackData(project, editor)
                 val modifiedScript = modifyVimCommandToVimScript(command)
+                println("Vim original command: $command")
+                println("Vim modified command: $modifiedScript")
                 VimScriptExecutionService.getInstance(project).execute(modifiedScript)
             }
         }

@@ -5,9 +5,8 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.vim.api.models.Mode
+import com.maddyhome.idea.vim.VimPlugin
 import com.maddyhome.idea.vim.api.injector
-import com.maddyhome.idea.vim.thinapi.changeMode
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -22,19 +21,29 @@ class VimScriptExecutionService(private val project: Project, private val scope:
     @Suppress("UnstableApiUsage")
     fun execute(vimScript: String) = scope.launch {
         writeCommandAction(project, "Vim Script Execution") {
-            val vimEditor = injector.editorGroup.getFocusedEditor()
-            if (vimEditor == null) {
-                LOG.error("No focused editor")
-                return@writeCommandAction
+            withVimPlugin {
+                val vimEditor = injector.editorGroup.getFocusedEditor()
+                if (vimEditor == null) {
+                    LOG.error("No focused editor")
+                    return@withVimPlugin
+                }
+                val vimContext = injector.executionContextManager.getEditorExecutionContext(vimEditor)
+                injector.vimscriptExecutor.execute(
+                    vimScript, vimEditor, vimContext,
+                    skipHistory = true,
+                    indicateErrors = true
+                )
             }
-            changeMode(Mode.NORMAL, vimEditor)
-            val vimContext = injector.executionContextManager.getEditorExecutionContext(vimEditor)
-            injector.vimscriptExecutor.execute(
-                vimScript, vimEditor, vimContext,
-                skipHistory = true,
-                indicateErrors = true
-            )
-            changeMode(Mode.INSERT, vimEditor)
+        }
+    }
+
+    private fun withVimPlugin(block: () -> Unit) {
+        try {
+            VimPlugin.setEnabled(true)
+            block()
+        }
+        finally {
+            VimPlugin.setEnabled(false)
         }
     }
 
