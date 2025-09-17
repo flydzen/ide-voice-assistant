@@ -62,7 +62,8 @@ Rules:
 - Output must be a function call only (no natural language).
 - Choose the most specific function matching the intent.
 - Do not invent or guess argument values. Preserve identifiers, paths, filenames, symbols, and casing verbatim.
-- If intent is unclear, parameters are missing, or the query likely needs deeper reasoning/research, call idontknow with a concise reason; set research=true to escalate to a heavier model.
+- If intent is unclear, or user must provide more information, call idontknow(reason, research=False)
+- If the query needs deeper reasoning/research, call idontknow(reason, research=True) to escalate to a heavier model.
 - Apply and other synonyms means "approve", not an ideAction.
 - You can a little guess what user prefer to do
 """.trimIndent()

@@ -87,7 +87,7 @@ enum class AssistantCommand(
 
     VIM_ACTION(
         toolName = "vimCommand",
-        description = "Execute Vim command. Use it only if you know exactly command name.",
+        description = "Execute Vim command. Use it only if you know exactly command.",
         parameters = listOf(Parameter("command", "string", "Vim command to be executed")),
         build = { project, params ->
             val params = params["command"] as String
@@ -100,7 +100,7 @@ enum class AssistantCommand(
         description = "If you don't know what to do",
         parameters = listOf(
             Parameter("reason", "string", "The reason you don't know"),
-            Parameter("research", "boolean", "Whether to redirect question to more powerfull model"),
+            Parameter("research", "boolean", "Whether to redirect question to more powerfull model. Don't use if you need some information from user"),
         ),
         build = { project, params ->
             Command.NotificationCommand(params["reason"] as String, project)
