@@ -1,11 +1,10 @@
 package com.github.flydzen.idevoiceassistant.services
 
-import SileroChunkSpeechEstimator
 import com.github.flydzen.idevoiceassistant.Config
 import com.github.flydzen.idevoiceassistant.Utils
-import com.github.flydzen.idevoiceassistant.vad.AmplitudeChunkSpeechEstimator
 import com.github.flydzen.idevoiceassistant.vad.ChunkSpeechEstimator
 import com.github.flydzen.idevoiceassistant.vad.InertiaSpeechEstimator
+import com.github.flydzen.idevoiceassistant.vad.SileroChunkSpeechEstimator
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service

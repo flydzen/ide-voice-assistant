@@ -1,12 +1,12 @@
-// Kotlin
+package com.github.flydzen.idevoiceassistant.vad
+
 import ai.onnxruntime.OnnxTensor
 import ai.onnxruntime.OrtEnvironment
 import ai.onnxruntime.OrtSession
-import com.github.flydzen.idevoiceassistant.vad.ChunkSpeechEstimator
 import java.nio.FloatBuffer
 
 class SileroChunkSpeechEstimator(
-    private val sampleRate: Long = 16_000L,
+    sampleRate: Long = 16_000L,
     private val windowSize: Int = 512
 ) : ChunkSpeechEstimator {
 
