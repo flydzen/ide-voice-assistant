@@ -18,7 +18,7 @@ enum class AssistantCommand(
         ),
         build = { project, _, params ->
             val text = params["text"] as String
-            EnterTextCommand(text, project)
+            EnterTextCommand(project, text)
         }
     ),
 
@@ -30,7 +30,7 @@ enum class AssistantCommand(
         ),
         build = { project, _, params ->
             val prompt = params["prompt"] as String
-            CodegenCommand(prompt, project)
+            CodegenCommand(project, prompt)
         }
     ),
 
@@ -42,7 +42,7 @@ enum class AssistantCommand(
         ),
         build = { project, _, params ->
             val fileName = params["fileName"] as String
-            FileNavigateCommand(fileName, project)
+            FileNavigateCommand(project, fileName)
         }
     ),
 
@@ -54,7 +54,7 @@ enum class AssistantCommand(
         ),
         build = { project, _, params ->
             val path = params["path"] as String
-            CreateFileCommand(path, project)
+            CreateFileCommand(project, path)
         }
     ),
 
@@ -62,8 +62,8 @@ enum class AssistantCommand(
         toolName = "cancel",
         description = "Cancel current command",
         parameters = emptyList(),
-        build = { project, prev, _ ->
-            CancelCommand(project, prev)
+        build = { _, prev, _ ->
+            CancelCommand(prev)
         }
     ),
 
@@ -105,7 +105,7 @@ enum class AssistantCommand(
         parameters = listOf(Parameter("command", "string", "Vim command to be executed. If it is ex-command, start with `:`. For example, `:2`")),
         build = { project, _, params ->
             val command = params["command"] as String
-            VimCommand(command, project)
+            VimCommand(project, command)
         }
     ),
 
@@ -120,7 +120,7 @@ enum class AssistantCommand(
             Parameter("research", "boolean", "Whether to redirect question to more powerfull model. Don't use if you need some information from user"),
         ),
         build = { project, _, params ->
-            NotificationCommand(params["reason"] as String, project)
+            NotificationCommand(project, params["reason"] as String)
         }
     );
 

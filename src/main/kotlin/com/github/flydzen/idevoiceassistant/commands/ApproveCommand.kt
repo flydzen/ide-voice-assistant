@@ -7,15 +7,12 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 
-class ApproveCommand(val project: Project) : Command() {
+class ApproveCommand(private val project: Project) : Command() {
     private var rollbackData: EditorSnapshot? = null
 
     override val toolName: String = "approve"
     override val description: String = "Approve, changes. Any synonyms of approve, approve, accept should trigger that command"
     override val parameters: List<Parameter> = emptyList()
-    override val build: (project: Project, previousCommand: Command?, params: Map<String, Any>) -> Command? = { project, _, _ ->
-        ApproveCommand(project)
-    }
 
     override fun process() {
         invokeLater {
@@ -28,5 +25,9 @@ class ApproveCommand(val project: Project) : Command() {
 
     override fun rollback() {
         rollbackData?.rollbackEditor(project)
+    }
+
+    companion object {
+        fun build(project: Project): ApproveCommand = ApproveCommand(project)
     }
 }

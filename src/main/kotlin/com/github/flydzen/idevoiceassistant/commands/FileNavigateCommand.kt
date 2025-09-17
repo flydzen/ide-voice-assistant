@@ -12,8 +12,8 @@ import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.search.GlobalSearchScope
 
 class FileNavigateCommand(
-    val fileName: String,
-    val project: Project,
+    private val project: Project,
+    private val fileName: String
 ) : Command() {
     private var rollbackData: RollbackData? = null
 
@@ -22,10 +22,6 @@ class FileNavigateCommand(
     override val parameters: List<Parameter> = listOf(
         Parameter("fileName", "string", "File name to open (e.g., MyClass.kt)")
     )
-    override val build: (project: Project, previousCommand: Command?, params: Map<String, Any>) -> Command? = { project, _, params ->
-        val fileName = params["fileName"] as String
-        FileNavigateCommand(fileName, project)
-    }
 
     data class RollbackData(
         val previousFile: VirtualFile?,
@@ -99,4 +95,11 @@ class FileNavigateCommand(
     }
 
     override fun toString(): String = "FileNavigate(fileName='$fileName')"
+
+    companion object {
+        fun build(project: Project, params: Map<String, Any>): FileNavigateCommand {
+            val fileName = params["fileName"] as String
+            return FileNavigateCommand(project, fileName)
+        }
+    }
 }

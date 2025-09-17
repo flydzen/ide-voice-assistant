@@ -7,7 +7,10 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 
-class EnterTextCommand(val text: String, val project: Project) : Command() {
+class EnterTextCommand(
+    private val project: Project,
+    private val text: String
+) : Command() {
     private var rollbackData: RollbackData? = null
 
     override val toolName: String = "insert"
@@ -15,10 +18,6 @@ class EnterTextCommand(val text: String, val project: Project) : Command() {
     override val parameters: List<Parameter> = listOf(
         Parameter("text", "string", "Text to insert")
     )
-    override val build: (project: Project, previousCommand: Command?, params: Map<String, Any>) -> Command? = { project, _, params ->
-        val text = params["text"] as String
-        EnterTextCommand(text, project)
-    }
 
     data class RollbackData(
         val insertOffset: Int,
@@ -81,4 +80,11 @@ class EnterTextCommand(val text: String, val project: Project) : Command() {
     }
 
     override fun toString(): String = "EnterText(text='$text')"
+
+    companion object {
+        fun build(project: Project, params: Map<String, Any>): EnterTextCommand {
+            val text = params["text"] as String
+            return EnterTextCommand(project, text)
+        }
+    }
 }

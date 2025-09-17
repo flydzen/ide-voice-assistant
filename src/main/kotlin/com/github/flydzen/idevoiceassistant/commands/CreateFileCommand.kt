@@ -12,20 +12,14 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 
 class CreateFileCommand(
-    private val path: String,
-    private val project: Project
+    private val project: Project,
+    private val path: String
 ) : Command() {
-    private val LOG = thisLogger()
-
     override val toolName: String = "createFile"
     override val description: String = "Create new file"
     override val parameters: List<Parameter> = listOf(
         Parameter("path", "string", "File name or file path to create. (e.g., MyClass.kt or src/main/kotlin/MyClass.kt)")
     )
-    override val build: (project: Project, previousCommand: Command?, params: Map<String, Any>) -> Command? = { project, _, params ->
-        val path = params["path"] as String
-        CreateFileCommand(path, project)
-    }
 
     override fun process() {
         invokeLater {
@@ -77,4 +71,13 @@ class CreateFileCommand(
     }
 
     override fun toString(): String = "CreateFile(path=\"$path\")"
+
+    companion object {
+        private val LOG = thisLogger()
+
+        fun build(project: Project, params: Map<String, Any>): CreateFileCommand {
+            val path = params["path"] as String
+            return CreateFileCommand(project, path)
+        }
+    }
 }

@@ -7,16 +7,15 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.IdeFocusManager
 
-class VimCommand(val command: String, val project: Project) : Command() {
+class VimCommand(
+    private val project: Project,
+    private val command: String
+) : Command() {
     private var rollbackData: EditorSnapshot? = null
 
     override val toolName: String = "vimCommand"
     override val description: String = "Execute Vim command. Use it only if you know exactly command."
     override val parameters: List<Parameter> = listOf(Parameter("command", "string", "Vim command to be executed. If it is ex-command, start with `:`"))
-    override val build: (project: Project, previousCommand: Command?, params: Map<String, Any>) -> Command? = { project, _, params ->
-        val command = params["command"] as String
-        VimCommand(command, project)
-    }
 
     override fun process() {
         invokeLater {
@@ -45,4 +44,11 @@ class VimCommand(val command: String, val project: Project) : Command() {
     }
 
     override fun toString(): String = "VimCommand(command='$command')"
+
+    companion object {
+        fun build(project: Project, params: Map<String, Any>): VimCommand {
+            val command = params["command"] as String
+            return VimCommand(project, command)
+        }
+    }
 }
