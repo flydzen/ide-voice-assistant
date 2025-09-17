@@ -30,5 +30,8 @@ enum class Stage {
     },
     Thinking {
         override fun toString(): String = "Thinking..."
+    },
+    Investigating {
+        override fun toString(): String = "Investigating..."
     }
 }

@@ -4,6 +4,8 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.github.flydzen.idevoiceassistant.Config
 import com.github.flydzen.idevoiceassistant.commands.AssistantCommand
+import com.github.flydzen.idevoiceassistant.services.Stage
+import com.github.flydzen.idevoiceassistant.services.StageService
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
@@ -74,7 +76,7 @@ Rules:
         OpenAIOkHttpClient.builder()
             .baseUrl(LITELLM_URL)
             .apiKey(LITELLM_API_KEY)
-            .timeout(Duration.ofSeconds(10))
+            .timeout(Duration.ofSeconds(60))
             .build()
     }
 
@@ -140,6 +142,7 @@ Rules:
             .toList()
         if (model != GPTModels.GPT5 && commands.any { it.name == "idontknow" && it.params["research"] == true }){
             LOG.info("Escalate to GPT5 for: $text")
+            project.service<StageService>().setStage(Stage.Investigating)
             return textToCommand(project, text, GPTModels.GPT5)
         }
         return commands
