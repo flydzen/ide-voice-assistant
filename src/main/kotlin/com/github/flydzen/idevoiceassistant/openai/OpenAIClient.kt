@@ -2,6 +2,7 @@ package com.github.flydzen.idevoiceassistant.openai
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
+import com.github.flydzen.idevoiceassistant.Utils
 import com.github.flydzen.idevoiceassistant.commands.AssistantCommand
 import com.intellij.openapi.diagnostic.thisLogger
 import com.openai.client.OpenAIClient
@@ -19,6 +20,13 @@ import com.openai.models.responses.ResponseInputItem
 import com.openai.models.responses.ToolChoiceOptions
 import java.io.File
 import java.time.Duration
+
+
+enum class ResponsesModels(val modelName: String) {
+    GPT5_NANO("openai/gpt-5-nano"),     // works slow and good
+    GPT5("openai/gpt-5"),               // for super heavy tasks
+    GPT4O_MINI("openai/gpt-4o-mini"),   // works fast and good
+}
 
 
 data class Parameter(
@@ -123,9 +131,9 @@ Rules:
         )
 
         val builder = ResponseCreateParams.builder()
-            .model(ResponsesModel.ofString("openai/gpt-5-nano"))
-            .reasoning(Reasoning.builder().effort(ReasoningEffort.LOW).build())
+            .model(ResponsesModel.ofString(ResponsesModels.GPT4O_MINI.modelName))
             .input(ResponseCreateParams.Input.ofResponse(inputs))
+            .toolChoice(ToolChoiceOptions.REQUIRED)
         AssistantCommand.entries.forEach { cmd ->
             builder.addTool(
                 function(
@@ -135,10 +143,9 @@ Rules:
                 )
             )
         }
-        val params = builder
-            .toolChoice(ToolChoiceOptions.REQUIRED)
-            .build()
+        val params = builder.build()
         val response = client.responses().create(params)
+        LOG.info("TTC response: $response")
         val result = response.output().filter { it.isFunctionCall() }.map { it.asFunctionCall() }
         return result.map {
             val argumentsJson = it.arguments()
