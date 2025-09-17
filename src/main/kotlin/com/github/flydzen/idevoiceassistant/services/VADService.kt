@@ -108,7 +108,6 @@ class VADService(
     private suspend fun processWindow(floatWindow: FloatArray, rawBytes: ByteArray, rawLen: Int) {
 
         val probability = estimator.getProbability(floatWindow)
-        println(probability)
         val speech = probability > 0.4f
         _volumeLevel.emit(probability)
 
