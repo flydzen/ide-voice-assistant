@@ -60,7 +60,7 @@ object OpenAIClient {
         ?: error("LITELLM_API_KEY environment variable is not set")
 
     private fun getPromptBase(language: Language?) = """
-You are an Intellij IDEA voice command router (ru/en). Map the user's utterance to exactly one function call. You always have open file with set carriage.
+You are an Intellij IDEA voice command router (en). Map the user's utterance to exactly one function call. You always have open file with set carriage.
 
 Rules:
 - Output must be a function call only (no natural language).
@@ -72,7 +72,7 @@ ${if (language != null) "- You must use ${language.displayName} language" else "
 """.trimIndent()
 
     private fun getPromptLight(language: Language?) = getPromptBase(language) + """
-- If you need to call Intellij Action, do idontknow(research=True).        
+- If you need to call Intellij Action (reformat code, run file), do idontknow(research=True).        
 """.trimIndent()
 
     private val objectMapper = jacksonObjectMapper()
@@ -111,7 +111,7 @@ ${if (language != null) "- You must use ${language.displayName} language" else "
                     "Transcribe developer voice commands for an IDE. " +
                             "Keep code terms as spoken. Plain text. " +
                             "If audio is noise, unclear, or not a command, return an empty string. " +
-                            "Russian or English")
+                            "English only")
                 .responseFormat(AudioResponseFormat.TEXT)
                 .file(file.toPath())
                 .temperature(0.0)

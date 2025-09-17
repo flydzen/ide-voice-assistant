@@ -94,15 +94,15 @@ enum class AssistantCommand(
             Parameter("actionId", "string", "actionId of Intellij IDEA action (e.g., ReformatCode, Kotlin.NewFile)")
         ),
         build = { project, _, params ->
-            val action = params["action"] as String
-            VimCommand( ":action $action", project)
+            val action = params["actionId"] as String
+            RunIdeAction( action, project)
         }
     ),
 
     VIM_ACTION(
         toolName = "vimCommand",
         description = "Execute Vim command. Use it only if you know exactly command.",
-        parameters = listOf(Parameter("command", "string", "Vim command to be executed. If it is ex-command, start with `:`")),
+        parameters = listOf(Parameter("command", "string", "Vim command to be executed. If it is ex-command, start with `:`. For example, `:2`")),
         build = { project, _, params ->
             val command = params["command"] as String
             VimCommand(command, project)
