@@ -120,6 +120,7 @@ class VADService(
                 silenceCounter = 0
                 phraseCounter = 1
                 phraseBuffer = ByteArrayOutputStream().also { it.write(rawBytes, 0, rawLen) }
+                project.service<StageService>().setStage(Stage.Listening)
                 LOG.info("VAD: начало фразы")
             } else {
                 // тишина, остаёмся вне речи

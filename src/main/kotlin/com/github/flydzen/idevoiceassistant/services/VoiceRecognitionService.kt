@@ -30,25 +30,28 @@ class VoiceRecognitionService(private val project: Project, private val scope: C
         scope.launch {
             project.service<VADService>().outputChannel.receiveAsFlow().collectLatest { filePath ->
                 if (!filePath.exists()) return@collectLatest
+                project.service<StageService>().setStage(Stage.Parsing)
                 val text = Utils.timeIt("STT") {
                     OpenAIClient.speech2Text(filePath.toFile())
                 }
                 if (text.isEmpty()) return@collectLatest
                 println("recognized: $text")
                 _recognizedText.emit(text)
+                project.service<StageService>().setStage(Stage.Thinking)
                 project.service<CommandHistoryStorage>().addCommand(text)
                 val commands = Utils.timeIt("TTC") {
                     OpenAIClient.textToCommand(project, text)
                 }
                 println("command: ${commands.firstOrNull()}")
                 CommandExecutor().execute(project, commands)
+                project.service<StageService>().setStage(Stage.Ready)
             }
         }
     }
 
     fun startRecognition() {
         project.service<RecordAudioService>().start()
-
+        project.service<StageService>().setStage(Stage.Ready)
         if (_isRecognitionActive.value) {
             return
         }
@@ -57,6 +60,7 @@ class VoiceRecognitionService(private val project: Project, private val scope: C
     }
 
     fun stopRecognition() {
+        project.service<StageService>().setStage(Stage.Disabled)
         project.service<RecordAudioService>().stop()
         _isRecognitionActive.value = false
         recognitionJob?.cancel()

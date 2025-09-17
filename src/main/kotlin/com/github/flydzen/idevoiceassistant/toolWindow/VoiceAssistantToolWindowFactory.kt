@@ -1,6 +1,7 @@
 package com.github.flydzen.idevoiceassistant.toolWindow
 
 import com.github.flydzen.idevoiceassistant.VoiceAssistantBundle
+import com.github.flydzen.idevoiceassistant.services.StageService
 import com.github.flydzen.idevoiceassistant.services.VADService
 import com.github.flydzen.idevoiceassistant.services.VoiceRecognitionService
 import com.intellij.openapi.components.service
@@ -44,6 +45,7 @@ class VoiceAssistantToolWindowFactory : ToolWindowFactory {
 
         private lateinit var recognizedTextArea: JTextArea
         private lateinit var volumeBar: VolumeBar
+        private lateinit var statusLabel: JBLabel
 
         init {
             scope.launch {
@@ -71,11 +73,20 @@ class VoiceAssistantToolWindowFactory : ToolWindowFactory {
                     }
                 }
             }
+
+            scope.launch {
+                project.service<StageService>().stage.collectLatest { stage ->
+                    SwingUtilities.invokeLater {
+                        statusLabel.text = stage.toString()
+                    }
+                }
+            }
         }
 
         private val jetbrainsMonoFont = Font("JetBrains Mono", Font.PLAIN, 15)
         private val jetbrainsMonoBoldFont = Font("JetBrains Mono", Font.BOLD, 30)
         private val jetbrainsMonoUserFont = Font("JetBrains Mono", Font.PLAIN, 12)
+        private val jetbrainsMonoStatusFont = Font("JetBrains Mono", Font.ITALIC, 11)
 
         fun getContent() = JBPanel<JBPanel<*>>(BorderLayout()).apply {
             val mainPanel = JBPanel<JBPanel<*>>().apply {
@@ -138,6 +149,13 @@ class VoiceAssistantToolWindowFactory : ToolWindowFactory {
                     add(volumeBar)
                 }
 
+                statusLabel = JBLabel().apply {
+                    font = jetbrainsMonoStatusFont
+                    foreground = JBColor(0xB0B0B0, 0x707070)
+                    horizontalAlignment = SwingConstants.LEFT
+                    alignmentX = LEFT_ALIGNMENT
+                    text = ""
+                }
 
                 recognizedTextArea = JTextArea().apply {
                     font = jetbrainsMonoUserFont
@@ -157,7 +175,9 @@ class VoiceAssistantToolWindowFactory : ToolWindowFactory {
                 add(descriptionLabel)
                 add(Box.createVerticalStrut(30))
                 add(microphonePanel)
-                add(Box.createVerticalStrut(15))
+                add(Box.createVerticalStrut(5))
+                add(statusLabel)
+                add(Box.createVerticalStrut(10))
                 add(recognizedTextArea)
                 add(Box.createVerticalGlue())
             }
