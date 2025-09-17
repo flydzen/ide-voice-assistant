@@ -1,11 +1,7 @@
 package com.github.flydzen.idevoiceassistant.commands
 
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.ActionPlaces
-import com.intellij.openapi.actionSystem.ActionUiKind
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.Presentation
+import com.github.flydzen.idevoiceassistant.openai.Parameter
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.components.service
@@ -13,8 +9,18 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import java.awt.EventQueue.invokeLater
 
-class RunIdeAction(private val actionId: String, private val project: Project) : Command() {
+class RunIdeAction(private val project: Project, private val actionId: String) : Command() {
     private var rollbackData: EditorSnapshot? = null
+
+    override val toolName: String = "ideAction"
+
+    override val description: String = "" +
+            "Run Intellij IDEA action via `ActionManager.getInstance().getAction`. " +
+            "Use it only if you know exactly action name."
+
+    override val parameters: List<Parameter> = listOf(
+        Parameter("actionId", "string", "actionId of Intellij IDEA action (e.g., ReformatCode, Kotlin.NewFile)")
+    )
 
     override fun process() {
         invokeLater {
@@ -46,4 +52,11 @@ class RunIdeAction(private val actionId: String, private val project: Project) :
     }
 
     override fun toString(): String = "RunIdeAction(actionId=\"$actionId\")"
+
+    companion object {
+        fun build(project: Project, params: Map<String, Any>): RunIdeAction {
+            val actionId = params["actionId"] as String
+            return RunIdeAction(project, actionId)
+        }
+    }
 }

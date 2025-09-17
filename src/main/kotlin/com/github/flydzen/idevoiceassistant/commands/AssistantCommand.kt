@@ -95,7 +95,7 @@ enum class AssistantCommand(
         ),
         build = { project, _, params ->
             val action = params["actionId"] as String
-            RunIdeAction( action, project)
+            RunIdeAction(project, action)
         }
     ),
 
