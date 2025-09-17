@@ -1,6 +1,8 @@
 package com.github.flydzen.idevoiceassistant
 
 import com.github.flydzen.idevoiceassistant.commands.Command
+import com.github.flydzen.idevoiceassistant.commands.EnterTextCommand
+import com.github.flydzen.idevoiceassistant.commands.FileNavigateCommand
 import com.github.flydzen.idevoiceassistant.executor.CommandExecutor
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
@@ -33,8 +35,8 @@ class ExecuteCommandsAction : AnAction() {
         // This is where you would get your commands from wherever they come from
         // For now, returning an example list
         return listOf(
-            Command.FileNavigate("Main.kt", project),
-            Command.EnterText("Hello from Voice Assistant!", project),
+            FileNavigateCommand("Main.kt", project),
+            EnterTextCommand("Hello from Voice Assistant!", project),
         )
     }
 }

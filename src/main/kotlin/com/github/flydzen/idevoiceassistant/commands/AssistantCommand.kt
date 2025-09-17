@@ -18,7 +18,7 @@ enum class AssistantCommand(
         ),
         build = { project, _, params ->
             val text = params["text"] as String
-            Command.EnterText(text, project)
+            EnterTextCommand(text, project)
         }
     ),
 
@@ -30,7 +30,7 @@ enum class AssistantCommand(
         ),
         build = { project, _, params ->
             val prompt = params["prompt"] as String
-            Command.Codegen(prompt, project)
+            CodegenCommand(prompt, project)
         }
     ),
 
@@ -42,7 +42,7 @@ enum class AssistantCommand(
         ),
         build = { project, _, params ->
             val fileName = params["fileName"] as String
-            Command.FileNavigate(fileName, project)
+            FileNavigateCommand(fileName, project)
         }
     ),
 
@@ -54,7 +54,7 @@ enum class AssistantCommand(
         ),
         build = { project, _, params ->
             val path = params["path"] as String
-            Command.CreateFile(path, project)
+            CreateFileCommand(path, project)
         }
     ),
 
@@ -63,7 +63,7 @@ enum class AssistantCommand(
         description = "Cancel current command",
         parameters = emptyList(),
         build = { project, prev, _ ->
-            Command.Cancel(project, prev)
+            CancelCommand(project, prev)
         }
     ),
 
@@ -72,7 +72,7 @@ enum class AssistantCommand(
         description = "Approve, changes. Any synonyms of approve, approve, accept should trigger that command",
         parameters = emptyList(),
         build = { project, _, _ ->
-            Command.Approve(project)
+            ApproveCommand(project)
         }
     ),
 
@@ -81,7 +81,7 @@ enum class AssistantCommand(
         description = "Stop current command. Also can be called by cancel, rollback and synonyms",
         parameters = emptyList(),
         build = { project, _, _ ->
-            Command.Stop(project)
+            StopCommand(project)
         }
     ),
 
@@ -95,7 +95,7 @@ enum class AssistantCommand(
         ),
         build = { project, _, params ->
             val action = params["action"] as String
-            Command.VimCommand( ":action $action", project)
+            VimCommand( ":action $action", project)
         }
     ),
 
@@ -105,7 +105,7 @@ enum class AssistantCommand(
         parameters = listOf(Parameter("command", "string", "Vim command to be executed. If it is ex-command, start with `:`")),
         build = { project, _, params ->
             val command = params["command"] as String
-            Command.VimCommand(command, project)
+            VimCommand(command, project)
         }
     ),
 
@@ -120,7 +120,7 @@ enum class AssistantCommand(
             Parameter("research", "boolean", "Whether to redirect question to more powerfull model. Don't use if you need some information from user"),
         ),
         build = { project, _, params ->
-            Command.NotificationCommand(params["reason"] as String, project)
+            NotificationCommand(params["reason"] as String, project)
         }
     );
 
