@@ -18,11 +18,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import java.io.ByteArrayOutputStream
-import java.io.IOException
-import java.nio.file.Files
 import java.nio.file.Path
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 
 @Service(Service.Level.PROJECT)
 class VADService(
@@ -152,21 +148,12 @@ class VADService(
             }
 
             val pcm = buffer.toByteArray()
-            val path = createOutputPath()
-            Utils.saveWave(pcm, path.toFile())
-            outputChannel.send(path)
-            LOG.info("VAD: конец фразы - $path")
+            val file = Utils.createTempFile("utterance-", ".wav")
+            Utils.saveWave(pcm, file)
+            outputChannel.send(file.toPath())
+            LOG.info("VAD: конец фразы - $file")
         } catch (e: Throwable) {
             LOG.warn("Не удалось сохранить фразу в WAV", e)
-        }
-    }
-
-    private fun createOutputPath(): Path {
-        val ts = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss_SSS"))
-        return try {
-            Files.createTempFile("utterance_$ts", ".wav")
-        } catch (_: IOException) {
-            Path.of("utterance_$ts.wav")
         }
     }
 

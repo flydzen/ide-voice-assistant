@@ -23,8 +23,8 @@ object Utils {
         return v
     }
 
-    fun createTempFile(): File {
-        val file = kotlin.io.path.createTempFile(prefix = "recording-", suffix = ".wav").toFile()
+    fun createTempFile(prefix: String, suffix: String): File {
+        val file = kotlin.io.path.createTempFile(prefix = prefix, suffix = suffix).toFile()
         LOG.info("Audio file created: ${file.absolutePath}")
         return file
     }
