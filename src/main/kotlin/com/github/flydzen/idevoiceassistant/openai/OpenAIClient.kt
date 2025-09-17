@@ -129,15 +129,7 @@ Rules:
 
         val previousCommands = getPreviousNCommands(project, 5)
         inputs.addAll(previousCommands)
-
-        inputs.add(
-            ResponseInputItem.ofMessage(
-                ResponseInputItem.Message.builder()
-                    .role(ResponseInputItem.Message.Role.USER)
-                    .addInputTextContent(text)
-                    .build()
-            )
-        )
+        inputs.add(text.toResponseUserInputItem())
 
         val builder = ResponseCreateParams.builder()
             .model(ResponsesModel.ofString(ResponsesModels.GPT4O_MINI.modelName))
@@ -170,14 +162,15 @@ Rules:
     @Suppress("SameParameterValue")
     private fun getPreviousNCommands(project: Project, n: Int): List<ResponseInputItem> {
         val previousCommands = project.service<CommandHistoryStorage>().getLastNCommands(n)
-        val responseInputItems = previousCommands.map { cmd ->
-            ResponseInputItem.ofMessage(
-                ResponseInputItem.Message.builder()
-                    .role(ResponseInputItem.Message.Role.USER)
-                    .addInputTextContent(cmd)
-                    .build()
-            )
-        }
+        val responseInputItems = previousCommands.map { cmd -> cmd.toResponseUserInputItem() }
         return responseInputItems
     }
+
+    private fun String.toResponseUserInputItem() =
+        ResponseInputItem.ofMessage(
+            ResponseInputItem.Message.builder()
+                .role(ResponseInputItem.Message.Role.USER)
+                .addInputTextContent(this)
+                .build()
+        )
 }
