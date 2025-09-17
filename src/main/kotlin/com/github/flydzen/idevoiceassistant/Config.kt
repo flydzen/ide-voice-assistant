@@ -3,6 +3,7 @@ package com.github.flydzen.idevoiceassistant
 import javax.sound.sampled.AudioFormat
 
 object Config {
+    const val AMOUNT_LAST_COMMANDS_TO_REMEMBER: Int = 5
     const val BUFFER_SIZE_BYTES: Int = 2048
 
     val audioFormat = AudioFormat(

@@ -2,7 +2,7 @@ package com.github.flydzen.idevoiceassistant.openai
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
-import com.github.flydzen.idevoiceassistant.Utils
+import com.github.flydzen.idevoiceassistant.Config
 import com.github.flydzen.idevoiceassistant.commands.AssistantCommand
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
@@ -10,8 +10,6 @@ import com.intellij.openapi.project.Project
 import com.openai.client.OpenAIClient
 import com.openai.client.okhttp.OpenAIOkHttpClient
 import com.openai.core.JsonValue
-import com.openai.models.Reasoning
-import com.openai.models.ReasoningEffort
 import com.openai.models.ResponsesModel
 import com.openai.models.audio.AudioModel
 import com.openai.models.audio.AudioResponseFormat
@@ -127,7 +125,7 @@ Rules:
             )
         )
 
-        val previousCommands = getPreviousNCommands(project, 5)
+        val previousCommands = getPreviousNCommands(project, Config.AMOUNT_LAST_COMMANDS_TO_REMEMBER)
         inputs.addAll(previousCommands)
         inputs.add(text.toResponseUserInputItem())
 
