@@ -29,9 +29,9 @@ class OpenAIRunAction : AnAction("Run OpenAI Voice Assistant") {
 
         ApplicationManager.getApplication().executeOnPooledThread {
             try {
-                val commands = OpenAIClient.textToCommands(project, textToProcess)
+                val commands = OpenAIClient.textToCommand(textToProcess)
                 println(commands)
-                CommandExecutor().execute(commands)
+                CommandExecutor().execute(project, commands)
             } catch (e: Exception) {
                 ApplicationManager.getApplication().invokeLater {
                     Messages.showErrorDialog(

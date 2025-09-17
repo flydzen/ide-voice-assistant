@@ -2,11 +2,12 @@ package com.github.flydzen.idevoiceassistant.commands
 
 import com.github.flydzen.idevoiceassistant.VoiceAssistantBundle
 import com.github.flydzen.idevoiceassistant.codeGeneration.AICodeGenActionsExecutor
+import com.github.flydzen.idevoiceassistant.editor
+import com.github.flydzen.idevoiceassistant.showNotification
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.MessageType
 import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.openapi.vfs.VirtualFile
@@ -94,23 +95,18 @@ sealed class Command {
         }
     }
 
-    class Codegen(private val prompt: String) : Command() {
+    class Codegen(private val prompt: String, private val project: Project) : Command() {
         override fun process() {
             invokeLater {
-                AICodeGenActionsExecutor.generateCode(prompt)
+                val editor = project.editor() ?: return@invokeLater
+                AICodeGenActionsExecutor.generateCode(prompt, editor)
             }
         }
     }
 
     class NotificationCommand(val project: Project) : Command() {
         override fun process() {
-            com.intellij.notification.NotificationGroupManager.getInstance()
-                .getNotificationGroup("Voice Assistant")
-                .createNotification(
-                    VoiceAssistantBundle.message("notification.command.not.recognized"),
-                    MessageType.WARNING
-                )
-                .notify(project)
+            showNotification(project, VoiceAssistantBundle.message("notification.command.not.recognized"))
         }
     }
 
@@ -143,7 +139,4 @@ sealed class Command {
             // TODO: stop other commands
         }
     }
-
-    fun Project.editor(): com.intellij.openapi.editor.Editor? =
-        FileEditorManager.getInstance(this).selectedTextEditor
 }

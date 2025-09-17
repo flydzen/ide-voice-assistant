@@ -13,10 +13,10 @@ import com.intellij.openapi.util.Disposer
 
 object AICodeGenActionsExecutor {
 
-    fun generateCode(promptText: String) {
+    fun generateCode(promptText: String, editor: Editor) {
         AutoCodeGenerationListener.promptText = promptText
         val action = AskAiAssistantInEditorAction()
-        ActionManager.getInstance().tryToExecute(action, null, null, null, true)
+        ActionManager.getInstance().tryToExecute(action, null, editor.component, null, true)
     }
 
     fun acceptAllChanges(editor: Editor) {

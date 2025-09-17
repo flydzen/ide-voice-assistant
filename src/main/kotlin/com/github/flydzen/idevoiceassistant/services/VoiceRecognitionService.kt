@@ -33,10 +33,10 @@ class VoiceRecognitionService(private val project: Project, private val scope: C
                 println("recognized: $text")
                 _recognizedText.emit(text)
                 val commands = TimeIt.timeIt("TTC") {
-                    OpenAIClient.textToCommands(project, text)
+                    OpenAIClient.textToCommand(text)
                 }
                 println("command: ${commands.firstOrNull()}")
-                CommandExecutor().execute(commands)
+                CommandExecutor().execute(project, commands)
             }
         }
     }

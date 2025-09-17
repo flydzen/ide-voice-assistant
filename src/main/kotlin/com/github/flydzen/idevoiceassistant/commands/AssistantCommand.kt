@@ -28,9 +28,9 @@ enum class AssistantCommand(
         parameters = listOf(
             Parameter("prompt", "string", "Prompt for code generation")
         ),
-        build = { _, params ->
+        build = { project, params ->
             val prompt = params["prompt"] as String
-            Command.Codegen(prompt)
+            Command.Codegen(prompt, project)
         }
     ),
 

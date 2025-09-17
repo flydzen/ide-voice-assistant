@@ -12,13 +12,9 @@ import java.time.Duration
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.github.flydzen.idevoiceassistant.commands.AssistantCommand
-import com.github.flydzen.idevoiceassistant.commands.Command
-import com.intellij.openapi.project.Project
 import com.openai.models.audio.AudioModel
 import com.openai.models.audio.AudioResponseFormat
 import com.openai.models.audio.transcriptions.TranscriptionCreateParams
-import com.openai.models.audio.transcriptions.TranscriptionInclude
-import fleet.kernel.transactor
 import java.io.File
 
 
@@ -135,10 +131,5 @@ object OpenAIClient {
             }
             CommandResult(it.name(), params = argumentsMap)
         }
-    }
-
-    fun textToCommands(project: Project, text: String): List<Command> {
-        val results = textToCommand(text)
-        return results.mapNotNull { AssistantCommand.toDomainCommand(project, it) }
     }
 }
