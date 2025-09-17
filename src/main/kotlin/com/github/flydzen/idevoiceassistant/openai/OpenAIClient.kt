@@ -115,19 +115,7 @@ Rules:
     }
 
     fun textToCommand(project: Project, text: String): List<CommandResult> {
-        val inputs = mutableListOf<ResponseInputItem>()
-        inputs.add(
-            ResponseInputItem.ofMessage(
-                ResponseInputItem.Message.builder()
-                    .role(ResponseInputItem.Message.Role.SYSTEM)
-                    .addInputTextContent(PROMPT)
-                    .build()
-            )
-        )
-
-        val previousCommands = getPreviousNCommands(project, Config.AMOUNT_LAST_COMMANDS_TO_REMEMBER)
-        inputs.addAll(previousCommands)
-        inputs.add(text.toResponseUserInputItem())
+        val inputs = getInputs(project, text)
 
         val builder = ResponseCreateParams.builder()
             .model(ResponsesModel.ofString(ResponsesModels.GPT4O_MINI.modelName))
@@ -155,6 +143,23 @@ Rules:
             }
             CommandResult(it.name(), params = argumentsMap)
         }
+    }
+
+    private fun getInputs(project: Project, text: String): List<ResponseInputItem> {
+        val inputs = mutableListOf<ResponseInputItem>()
+        inputs.add(
+            ResponseInputItem.ofMessage(
+                ResponseInputItem.Message.builder()
+                    .role(ResponseInputItem.Message.Role.SYSTEM)
+                    .addInputTextContent(PROMPT)
+                    .build()
+            )
+        )
+
+        val previousCommands = getPreviousNCommands(project, Config.AMOUNT_LAST_COMMANDS_TO_REMEMBER)
+        inputs.addAll(previousCommands)
+        inputs.add(text.toResponseUserInputItem())
+        return inputs
     }
 
     @Suppress("SameParameterValue")
