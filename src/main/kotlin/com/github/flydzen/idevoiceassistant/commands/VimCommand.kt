@@ -52,7 +52,9 @@ class VimCommand private constructor(
 
         fun build(project: Project, params: Map<String, Any>): VimCommand {
             val command = params["command"] as String
-            return VimCommand(project, command)
+            return build(project, command)
         }
+
+        fun build(project: Project, command: String): VimCommand = VimCommand(project, command)
     }
 }

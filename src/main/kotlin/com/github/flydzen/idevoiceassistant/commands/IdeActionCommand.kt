@@ -59,7 +59,9 @@ class IdeActionCommand private constructor(
 
         fun build(project: Project, params: Map<String, Any>): IdeActionCommand {
             val actionId = params["actionId"] as String
-            return IdeActionCommand(project, actionId)
+            return build(project, actionId)
         }
+
+        fun build(project: Project, actionId: String): IdeActionCommand = IdeActionCommand(project, actionId)
     }
 }

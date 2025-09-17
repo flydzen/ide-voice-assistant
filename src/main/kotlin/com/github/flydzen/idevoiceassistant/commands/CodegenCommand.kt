@@ -6,7 +6,10 @@ import com.github.flydzen.idevoiceassistant.openai.Parameter
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.project.Project
 
-class CodegenCommand private constructor(private val project: Project, private val prompt: String) : Command() {
+class CodegenCommand private constructor(
+    private val project: Project,
+    private val prompt: String
+) : Command() {
 
     override fun process() {
         invokeLater {
@@ -37,7 +40,9 @@ class CodegenCommand private constructor(private val project: Project, private v
 
         fun build(project: Project, params: Map<String, Any>): CodegenCommand {
             val prompt = params["prompt"] as String
-            return CodegenCommand(project, prompt)
+            return build(project, prompt)
         }
+
+        fun build(project: Project, prompt: String): CodegenCommand = CodegenCommand(project, prompt)
     }
 }

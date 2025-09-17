@@ -30,7 +30,9 @@ class NotificationCommand private constructor(
 
         fun build(project: Project, params: Map<String, Any>): NotificationCommand {
             val text = params["text"] as String
-            return NotificationCommand(project, text)
+            return build(project, text)
         }
+
+        fun build(project: Project, text: String): NotificationCommand = NotificationCommand(project, text)
     }
 }

@@ -16,7 +16,7 @@ class CancelCommand private constructor(private val previousCommand: Command?) :
         override val description: String = "Cancel previous command"
         override val parameters: List<Parameter> = emptyList()
 
-        override fun build(project: Project, previousCommand: Command?, params: Map<String, Any>): Command = CancelCommand(previousCommand)
+        override fun build(project: Project, previousCommand: Command?, params: Map<String, Any>): Command = build(previousCommand)
 
         fun build(previousCommand: Command?): CancelCommand = CancelCommand(previousCommand)
     }

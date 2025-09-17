@@ -80,7 +80,9 @@ class CreateFileCommand private constructor(
 
         fun build(project: Project, params: Map<String, Any>): CreateFileCommand {
             val path = params["path"] as String
-            return CreateFileCommand(project, path)
+            return build(project, path)
         }
+
+        fun build(project: Project, path: String): CreateFileCommand = CreateFileCommand(project, path)
     }
 }
