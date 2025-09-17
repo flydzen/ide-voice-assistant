@@ -1,5 +1,6 @@
 package com.github.flydzen.idevoiceassistant.commands
 
+import com.github.flydzen.idevoiceassistant.openai.Parameter
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -8,6 +9,16 @@ import com.intellij.openapi.vfs.VirtualFile
 
 class EnterTextCommand(val text: String, val project: Project) : Command() {
     private var rollbackData: RollbackData? = null
+
+    override val toolName: String = "insert"
+    override val description: String = "Insert text at the cursor"
+    override val parameters: List<Parameter> = listOf(
+        Parameter("text", "string", "Text to insert")
+    )
+    override val build: (project: Project, previousCommand: Command?, params: Map<String, Any>) -> Command? = { project, _, params ->
+        val text = params["text"] as String
+        EnterTextCommand(text, project)
+    }
 
     data class RollbackData(
         val insertOffset: Int,

@@ -1,6 +1,7 @@
 package com.github.flydzen.idevoiceassistant.commands
 
 import com.github.flydzen.idevoiceassistant.Utils.editor
+import com.github.flydzen.idevoiceassistant.openai.Parameter
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.diagnostic.thisLogger
@@ -15,6 +16,16 @@ class CreateFileCommand(
     private val project: Project
 ) : Command() {
     private val LOG = thisLogger()
+
+    override val toolName: String = "createFile"
+    override val description: String = "Create new file"
+    override val parameters: List<Parameter> = listOf(
+        Parameter("path", "string", "File name or file path to create. (e.g., MyClass.kt or src/main/kotlin/MyClass.kt)")
+    )
+    override val build: (project: Project, previousCommand: Command?, params: Map<String, Any>) -> Command? = { project, _, params ->
+        val path = params["path"] as String
+        CreateFileCommand(path, project)
+    }
 
     override fun process() {
         invokeLater {

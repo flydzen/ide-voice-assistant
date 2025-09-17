@@ -1,5 +1,6 @@
 package com.github.flydzen.idevoiceassistant.commands
 
+import com.github.flydzen.idevoiceassistant.openai.Parameter
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.runReadAction
@@ -15,6 +16,16 @@ class FileNavigateCommand(
     val project: Project,
 ) : Command() {
     private var rollbackData: RollbackData? = null
+
+    override val toolName: String = "fileNavigate"
+    override val description: String = "Open file in editor"
+    override val parameters: List<Parameter> = listOf(
+        Parameter("fileName", "string", "File name to open (e.g., MyClass.kt)")
+    )
+    override val build: (project: Project, previousCommand: Command?, params: Map<String, Any>) -> Command? = { project, _, params ->
+        val fileName = params["fileName"] as String
+        FileNavigateCommand(fileName, project)
+    }
 
     data class RollbackData(
         val previousFile: VirtualFile?,
