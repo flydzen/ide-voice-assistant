@@ -50,6 +50,7 @@ object OpenAIClient {
 
     const val LITELLM_URL: String = "https://litellm.labs.jb.gg"
     private val LITELLM_API_KEY: String = System.getenv("LITELLM_API_KEY")
+        .takeIf { !it.isNullOrBlank() }
         ?: error("LITELLM_API_KEY environment variable is not set")
 
     private val PROMPT = """
