@@ -4,9 +4,6 @@ import com.github.flydzen.idevoiceassistant.Utils
 import com.github.flydzen.idevoiceassistant.Utils.editor
 import com.github.flydzen.idevoiceassistant.codeGeneration.AICodeGenActionsExecutor
 import com.github.flydzen.idevoiceassistant.services.VimScriptExecutionService
-import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.actionSystem.ex.ActionUtil
-import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.components.service
@@ -172,43 +169,8 @@ sealed class Command {
                 editor.scrollingModel.scrollToCaret(com.intellij.openapi.editor.ScrollType.CENTER)
             }
         }
+        override fun toString(): String = "FileNavigate(fileName='$fileName')"
     }
-
-    class RunIdeAction(private val actionId: String, private val project: Project) : Command() {
-        private var rollbackData: RollbackEditorData? = null
-
-        override fun process() {
-            invokeLater {
-                val editor = project.service<FileEditorManager>().selectedTextEditor
-                editor?.let { rollbackData = collectEditorRollbackData(project, it) }
-
-                val action = ActionManager.getInstance().getAction(actionId) ?: return@invokeLater
-                val dataContext = SimpleDataContext.builder()
-                    .add(CommonDataKeys.PROJECT, project)
-                    .apply { if (editor != null) add(CommonDataKeys.EDITOR, editor) }
-                    .build()
-
-                val presentation: Presentation = action.templatePresentation.clone()
-
-                val event = AnActionEvent.createEvent(
-                    action,
-                    dataContext,
-                    presentation,
-                    ActionPlaces.UNKNOWN,
-                    ActionUiKind.NONE,
-                    null
-                )
-                ActionUtil.performAction(action, event)
-            }
-        }
-
-        override fun rollback() {
-            rollbackData?.rollbackEditor(project)
-        }
-
-        override fun toString(): String = "RunIdeAction(actionId=\"$actionId\")"
-    }
-
 
     class Codegen(private val prompt: String, private val project: Project) : Command() {
         override fun process() {
@@ -224,6 +186,7 @@ sealed class Command {
                 AICodeGenActionsExecutor.discard(editor)
             }
         }
+        override fun toString(): String = "Codegen(prompt='$prompt')"
     }
 
     class NotificationCommand(private val text: String, val project: Project) : Command() {
@@ -271,7 +234,7 @@ sealed class Command {
         override fun rollback() {}
     }
 
-    class VimCommand(val project: Project, val command: String) : Command() {
+    class VimCommand(val command: String, val project: Project) : Command() {
         private var rollbackData: RollbackEditorData? = null
 
         override fun process() {
@@ -297,6 +260,8 @@ sealed class Command {
         override fun rollback() {
             rollbackData?.rollbackEditor(project)
         }
+
+        override fun toString(): String = "VimCommand(command='$command')"
     }
 
     class RollbackEditorData(

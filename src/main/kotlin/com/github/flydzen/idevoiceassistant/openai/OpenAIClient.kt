@@ -28,6 +28,7 @@ import java.time.Duration
 
 enum class GPTModels(val modelName: String) {
     GPT5_NANO("openai/gpt-5-nano"),     // works slow and good
+    GPT5_MINI("openai/gpt-5-mini"),     // ?
     GPT5("openai/gpt-5"),               // for super heavy tasks
     GPT4O_MINI("openai/gpt-4o-mini"),   // works fast and good
 }
@@ -52,24 +53,24 @@ data class CommandResult(
 object OpenAIClient {
     private val LOG = thisLogger()
 
+    private val HEAVY_MODEL = GPTModels.GPT5_MINI
     private const val LITELLM_URL: String = "https://litellm.labs.jb.gg"
     private val LITELLM_API_KEY: String = System.getenv("LITELLM_API_KEY")
         .takeIf { !it.isNullOrBlank() }
         ?: error("LITELLM_API_KEY environment variable is not set")
 
     private fun getPromptBase(language: Language?) = """
-You are an IDE voice command router (ru/en). Map the user’s utterance to exactly one function call.
+You are an Intellij IDEA voice command router (ru/en). Map the user's utterance to exactly one function call. You always have open file with set carriage.
 
 Rules:
 - Output must be a function call only (no natural language).
 - Choose the most specific function matching the intent.
 - Do not invent or guess argument values. Preserve identifiers, paths, filenames, symbols, and casing verbatim.
-- If intent is unclear, or user must provide more information, call idontknow(reason, research=False)
-- If the query needs deeper reasoning/research, call idontknow(reason, research=True) to escalate to a heavier model.
-- Apply and other synonyms means "approve", not an ideAction.
+- Do not generate code by yourself.
 - You can a little guess what user prefer to do
 ${if (language != null) "- You must use ${language.displayName} language" else ""}
 """.trimIndent()
+
     private fun getPromptLight(language: Language?) = getPromptBase(language) + """
 - If you need to call Intellij Action, do idontknow(research=True).        
 """.trimIndent()
@@ -144,10 +145,10 @@ ${if (language != null) "- You must use ${language.displayName} language" else "
                 CommandResult(functionCall.name(), params = params)
             }
             .toList()
-        if (model != GPTModels.GPT5 && commands.any { it.name == "idontknow" && it.params["research"] == true }){
+        if (model != HEAVY_MODEL && commands.any { it.name == "idontknow" && it.params["research"] == true }){
             LOG.info("Escalate to GPT5 for: $text")
             project.service<StageService>().setStage(Stage.Investigating)
-            return textToCommand(project, text, GPTModels.GPT5)
+            return textToCommand(project, text, HEAVY_MODEL)
         }
         return commands
     }
@@ -191,7 +192,9 @@ ${if (language != null) "- You must use ${language.displayName} language" else "
             .model(ResponsesModel.ofString(model.modelName))
             .input(ResponseCreateParams.Input.ofResponse(inputs))
             .toolChoice(ToolChoiceOptions.REQUIRED)
-        AssistantCommand.entries.forEach { cmd ->
+        AssistantCommand.entries.filter {
+            model == HEAVY_MODEL || it.toolName != AssistantCommand.IDE_ACTION.toolName
+        }.forEach { cmd ->
             builder.addTool(
                 function(
                     name = cmd.toolName,

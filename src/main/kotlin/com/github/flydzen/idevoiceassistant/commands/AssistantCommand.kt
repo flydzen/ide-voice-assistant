@@ -24,9 +24,9 @@ enum class AssistantCommand(
 
     GENERATE(
         toolName = "generate",
-        description = "Generate code/content from instructions",
+        description = "Generate code in current file from only natural language prompt. Use it always when generating code except raw input",
         parameters = listOf(
-            Parameter("prompt", "string", "Prompt for code generation")
+            Parameter("prompt", "string", "test-based prompt for code generation. No code. Just english text.")
         ),
         build = { project, _, params ->
             val prompt = params["prompt"] as String
@@ -57,7 +57,7 @@ enum class AssistantCommand(
 
     APPROVE(
         toolName = "approve",
-        description = "Approve changes",
+        description = "Approve, changes. Any synonyms of approve, approve, accept should trigger that command",
         parameters = emptyList(),
         build = { project, _, _ ->
             Command.Approve(project)
@@ -75,29 +75,34 @@ enum class AssistantCommand(
 
     IDE_ACTION(
         toolName = "ideAction",
-        description = "Run Intellij IDEA action. Use it only if you know exactly action name.",
+        description = "" +
+                "Run Intellij IDEA action via `ActionManager.getInstance().getAction`. " +
+                "Use it only if you know exactly action name.",
         parameters = listOf(
-            Parameter("action", "string", "Name of Intellij IDEA action (e.g., ReformatCode)")
+            Parameter("actionId", "string", "actionId of Intellij IDEA action (e.g., ReformatCode, Kotlin.NewFile)")
         ),
         build = { project, _, params ->
-            val fileName = params["action"] as String
-            Command.RunIdeAction(fileName, project)
+            val action = params["action"] as String
+            Command.VimCommand( ":action $action", project)
         }
     ),
 
     VIM_ACTION(
         toolName = "vimCommand",
         description = "Execute Vim command. Use it only if you know exactly command.",
-        parameters = listOf(Parameter("command", "string", "Vim command to be executed")),
+        parameters = listOf(Parameter("command", "string", "Vim command to be executed. If it is ex-command, start with `:`")),
         build = { project, _, params ->
-            val params = params["command"] as String
-            Command.VimCommand(project, params)
+            val command = params["command"] as String
+            Command.VimCommand(command, project)
         }
     ),
 
     IDONTKNOW(
         toolName = "idontknow",
-        description = "If you don't know what to do",
+        description = "If you don't know what to do, intent is unclear, or user must provide more information, " +
+                "call idontknow(reason, research=False). " +
+                "If the query needs deeper reasoning/research, " +
+                "call idontknow(reason, research=True) to escalate to a heavier model.",
         parameters = listOf(
             Parameter("reason", "string", "The reason you don't know"),
             Parameter("research", "boolean", "Whether to redirect question to more powerfull model. Don't use if you need some information from user"),
