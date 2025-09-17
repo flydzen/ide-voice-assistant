@@ -1,11 +1,11 @@
 package com.github.flydzen.idevoiceassistant.actions
 
 import com.github.flydzen.idevoiceassistant.services.VimScriptExecutionService
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.progress.currentThreadCoroutineScope
 import com.intellij.openapi.project.Project
@@ -37,6 +37,7 @@ class ExecuteVimScriptAction : AnAction() {
         }
     }
 
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
     private suspend fun showVimScriptDialog(project: Project): Pair<Boolean, String?> = withContext(Dispatchers.EDT) {
         val dialog = InputVimScriptDialog(project)
