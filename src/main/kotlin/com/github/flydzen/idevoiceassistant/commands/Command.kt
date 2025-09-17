@@ -22,6 +22,7 @@ import com.intellij.psi.search.GlobalSearchScope
 sealed class Command {
     abstract fun process()
     abstract fun rollback()
+    
     class EnterText(val text: String, val project: Project) : Command() {
         private var rollbackData: RollbackData? = null
 
@@ -30,7 +31,6 @@ sealed class Command {
             val insertLength: Int,
             val virtualFile: VirtualFile?
         )
-
 
         override fun process() {
             invokeLater {
