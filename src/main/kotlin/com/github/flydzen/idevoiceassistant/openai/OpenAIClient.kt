@@ -116,21 +116,7 @@ Rules:
 
     fun textToCommand(project: Project, text: String): List<CommandResult> {
         val inputs = getInputs(project, text)
-
-        val builder = ResponseCreateParams.builder()
-            .model(ResponsesModel.ofString(ResponsesModels.GPT4O_MINI.modelName))
-            .input(ResponseCreateParams.Input.ofResponse(inputs))
-            .toolChoice(ToolChoiceOptions.REQUIRED)
-        AssistantCommand.entries.forEach { cmd ->
-            builder.addTool(
-                function(
-                    name = cmd.toolName,
-                    description = cmd.description,
-                    parameters = cmd.parameters
-                )
-            )
-        }
-        val params = builder.build()
+        val params = getParams(inputs)
         val response = client.responses().create(params)
         LOG.info("TTC response: $response")
         val result = response.output().filter { it.isFunctionCall() }.map { it.asFunctionCall() }
@@ -176,4 +162,21 @@ Rules:
                 .addInputTextContent(this)
                 .build()
         )
+
+    private fun getParams(inputs: List<ResponseInputItem>): ResponseCreateParams {
+        val builder = ResponseCreateParams.builder()
+            .model(ResponsesModel.ofString(ResponsesModels.GPT4O_MINI.modelName))
+            .input(ResponseCreateParams.Input.ofResponse(inputs))
+            .toolChoice(ToolChoiceOptions.REQUIRED)
+        AssistantCommand.entries.forEach { cmd ->
+            builder.addTool(
+                function(
+                    name = cmd.toolName,
+                    description = cmd.description,
+                    parameters = cmd.parameters
+                )
+            )
+        }
+        return builder.build()
+    }
 }
