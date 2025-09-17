@@ -51,7 +51,7 @@ dependencies {
 
         testFramework(TestFrameworkType.Platform)
 
-        implementation("com.microsoft.onnxruntime:onnxruntime:1.20.0")
+        implementation("com.microsoft.onnxruntime:onnxruntime:1.22.0")
     }
 }
 
