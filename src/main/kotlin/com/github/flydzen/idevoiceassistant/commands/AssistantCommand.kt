@@ -46,6 +46,18 @@ enum class AssistantCommand(
         }
     ),
 
+    CREATE_FILE(
+        toolName = "createFile",
+        description = "Create new file",
+        parameters = listOf(
+            Parameter("path", "string", "File name or file path to create. (e.g., MyClass.kt or src/main/kotlin/MyClass.kt)")
+        ),
+        build = { project, _, params ->
+            val path = params["path"] as String
+            Command.CreateFile(path, project)
+        }
+    ),
+
     CANCEL(
         toolName = "cancel",
         description = "Cancel current command",
@@ -66,7 +78,7 @@ enum class AssistantCommand(
 
     STOP(
         toolName = "stop",
-        description = "Stop current command",
+        description = "Stop current command. Also can be called by cancel, rollback and synonyms",
         parameters = emptyList(),
         build = { project, _, _ ->
             Command.Stop(project)
