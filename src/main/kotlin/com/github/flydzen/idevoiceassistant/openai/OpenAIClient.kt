@@ -4,7 +4,8 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.github.flydzen.idevoiceassistant.Config
 import com.github.flydzen.idevoiceassistant.Utils.language
-import com.github.flydzen.idevoiceassistant.commands.AssistantCommand
+import com.github.flydzen.idevoiceassistant.commands.Command
+import com.github.flydzen.idevoiceassistant.commands.IdeActionCommand
 import com.github.flydzen.idevoiceassistant.services.Stage
 import com.github.flydzen.idevoiceassistant.services.StageService
 import com.intellij.lang.Language
@@ -192,8 +193,8 @@ ${if (language != null) "- You must use ${language.displayName} language" else "
             .model(ResponsesModel.ofString(model.modelName))
             .input(ResponseCreateParams.Input.ofResponse(inputs))
             .toolChoice(ToolChoiceOptions.REQUIRED)
-        AssistantCommand.entries.filter {
-            model == HEAVY_MODEL || it.toolName != AssistantCommand.IDE_ACTION.toolName
+        Command.commands.filter {
+            model == HEAVY_MODEL || it.toolName != IdeActionCommand.toolName
         }.forEach { cmd ->
             builder.addTool(
                 function(

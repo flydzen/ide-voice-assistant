@@ -1,6 +1,5 @@
 package com.github.flydzen.idevoiceassistant.executor
 
-import com.github.flydzen.idevoiceassistant.commands.AssistantCommand
 import com.github.flydzen.idevoiceassistant.commands.Command
 import com.github.flydzen.idevoiceassistant.openai.CommandResult
 import com.intellij.openapi.components.Service
@@ -18,7 +17,7 @@ class CommandExecutor {
 
     fun execute(project: Project, commandResults: List<CommandResult>) {
         val commands = commandResults.runningFold(previousCommand) { previousCommand, currentResult ->
-            AssistantCommand.toDomainCommand(project, previousCommand, currentResult)
+            Command.getCommandByName(project, previousCommand, currentResult)
         }
             .drop(1)
             .filterNotNull()
