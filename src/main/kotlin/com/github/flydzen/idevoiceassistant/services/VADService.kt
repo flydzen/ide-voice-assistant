@@ -1,5 +1,6 @@
 package com.github.flydzen.idevoiceassistant.services
 
+import SileroChunkSpeechEstimator
 import com.github.flydzen.idevoiceassistant.Config
 import com.github.flydzen.idevoiceassistant.Utils
 import com.github.flydzen.idevoiceassistant.vad.AmplitudeChunkSpeechEstimator
@@ -25,7 +26,7 @@ class VADService(
     private val project: Project,
     scope: CoroutineScope,
 ): Disposable {
-    val estimator: ChunkSpeechEstimator = AmplitudeChunkSpeechEstimator()
+    val estimator: ChunkSpeechEstimator = SileroChunkSpeechEstimator()
 
     val outputChannel = Channel<Path>(capacity = Channel.UNLIMITED)
 
@@ -107,7 +108,8 @@ class VADService(
     private suspend fun processWindow(floatWindow: FloatArray, rawBytes: ByteArray, rawLen: Int) {
 
         val probability = estimator.getProbability(floatWindow)
-        val speech = probability > 0.5f
+        println(probability)
+        val speech = probability > 0.4f
         _volumeLevel.emit(probability)
 
         if (!inSpeech) {
