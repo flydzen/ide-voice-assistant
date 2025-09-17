@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.NonNls
 
 class ExecuteCommandsAction : AnAction() {
 
@@ -38,5 +39,11 @@ class ExecuteCommandsAction : AnAction() {
             FileNavigateCommand.build(project, "Main.kt"),
             EnterTextCommand.build(project, "Hello from Voice Assistant!"),
         )
+    }
+
+    companion object {
+        @Suppress("unused")
+        @NonNls
+        private const val ACTION_ID: String = "ExecuteCommands"
     }
 }
