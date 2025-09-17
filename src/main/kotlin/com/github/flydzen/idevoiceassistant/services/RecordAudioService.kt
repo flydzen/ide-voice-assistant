@@ -3,6 +3,7 @@ package com.github.flydzen.idevoiceassistant.services
 import com.github.flydzen.idevoiceassistant.Config
 import com.github.flydzen.idevoiceassistant.Utils
 import com.github.flydzen.idevoiceassistant.audio.listeners.AudioListener
+import com.github.flydzen.idevoiceassistant.audio.listeners.LogListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.Logger
@@ -32,6 +33,10 @@ class RecordAudioService(
     private val microphone = createMicrophone()
 
     val inputChannel = Channel<ByteArray>(capacity = Channel.UNLIMITED)
+
+    init {
+        listeners.add(LogListener)
+    }
 
     fun start() {
         if (!lock()) {
