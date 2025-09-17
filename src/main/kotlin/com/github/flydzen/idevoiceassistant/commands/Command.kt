@@ -15,6 +15,7 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.search.GlobalSearchScope
 
@@ -174,6 +175,11 @@ sealed class Command {
     class VimCommand(val project: Project, val command: String) : Command() {
         override fun process() {
             invokeLater {
+                val fileEditorManager = FileEditorManager.getInstance(project)
+                val editorComponent = fileEditorManager.selectedTextEditor?.contentComponent
+                if (editorComponent != null) {
+                    IdeFocusManager.getInstance(project).requestFocus(editorComponent, true)
+                }
                 val modifiedScript = modifyVimCommandToVimScript(command)
                 VimScriptExecutionService.getInstance(project).execute(modifiedScript)
             }
