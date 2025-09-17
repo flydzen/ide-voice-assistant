@@ -139,9 +139,9 @@ class VoiceAssistantToolWindowFactory : ToolWindowFactory {
                     }
 
                     volumeBar = VolumeBar().apply {
-                        preferredSize = Dimension(150, 20)
-                        minimumSize = Dimension(150, 20)
-                        maximumSize = Dimension(150, 20)
+                        preferredSize = Dimension(230, 5)
+                        minimumSize = Dimension(100, 5)
+                        maximumSize = Dimension(230, 5)
                     }
 
                     add(startButton)
