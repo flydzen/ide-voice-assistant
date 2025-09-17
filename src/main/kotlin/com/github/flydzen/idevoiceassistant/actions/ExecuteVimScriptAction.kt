@@ -33,7 +33,7 @@ class ExecuteVimScriptAction : AnAction() {
             IdeFocusManager.getInstance(project)
                 .requestFocus(selectedEditor.contentComponent, true)
 
-            project.service<VimScriptExecutionService>().execute(script)
+            VimScriptExecutionService.getInstance(project).execute(script)
         }
     }
 

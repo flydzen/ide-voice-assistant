@@ -85,6 +85,16 @@ enum class AssistantCommand(
         }
     ),
 
+    VIM_ACTION(
+        toolName = "vimCommand",
+        description = "Execute Vim command. Use it only if you know exactly command name.",
+        parameters = listOf(Parameter("command", "string", "Vim command to be executed")),
+        build = { project, params ->
+            val params = params["command"] as String
+            Command.VimCommand(project, params)
+        }
+    ),
+
     IDONTKNOW(
         toolName = "idontknow",
         description = "If you don't know what to do",

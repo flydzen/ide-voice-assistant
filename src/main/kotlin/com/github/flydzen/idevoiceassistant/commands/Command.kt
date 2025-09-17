@@ -3,6 +3,7 @@ package com.github.flydzen.idevoiceassistant.commands
 import com.github.flydzen.idevoiceassistant.Utils
 import com.github.flydzen.idevoiceassistant.Utils.editor
 import com.github.flydzen.idevoiceassistant.codeGeneration.AICodeGenActionsExecutor
+import com.github.flydzen.idevoiceassistant.services.VimScriptExecutionService
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
@@ -162,6 +163,22 @@ sealed class Command {
                 AICodeGenActionsExecutor.stop(editor)
             }
             // TODO: stop other commands
+        }
+    }
+
+    class VimCommand(val project: Project, val command: String) : Command() {
+        override fun process() {
+            invokeLater {
+                val modifiedScript = modifyVimCommandToVimScript(command)
+                VimScriptExecutionService.getInstance(project).execute(modifiedScript)
+            }
+        }
+
+        private fun modifyVimCommandToVimScript(command: String): String {
+            return if (!command.startsWith(":")) {
+                ":normal $command<cr>"
+            }
+            else command
         }
     }
 }
