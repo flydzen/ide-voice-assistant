@@ -55,7 +55,7 @@ object OpenAIClient {
         OpenAIOkHttpClient.builder()
             .baseUrl(LITELLM_URL)
             .apiKey(LITELLM_API_KEY)
-            .timeout(Duration.ofSeconds(60))
+            .timeout(Duration.ofSeconds(10))
             .build()
     }
 
@@ -80,15 +80,16 @@ object OpenAIClient {
     fun speech2Text(file: File): String {
         val response = client.audio().transcriptions().create(
             TranscriptionCreateParams.builder()
-                .model(AudioModel.WHISPER_1)
-//                .language("ru-RU")
+                .model(AudioModel.GPT_4O_TRANSCRIBE)
                 .prompt("This is a user input to control Code Editor.")
                 .responseFormat(AudioResponseFormat.TEXT)
                 .file(file.toPath())
                 .build()
         )
-
-        return objectMapper.readValue<Map<String, Any>>(response.asTranscription().text())["text"].toString()
+        val jsonString = response.asTranscription().text()
+        if (jsonString == "context:\\n")
+            return ""
+        return objectMapper.readValue<Map<String, Any>>(jsonString)["text"].toString()
     }
 
     fun textToCommand(text: String): List<CommandResult> {

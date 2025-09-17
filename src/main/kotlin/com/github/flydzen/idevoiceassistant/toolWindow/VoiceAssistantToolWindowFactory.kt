@@ -190,6 +190,7 @@ class VoiceAssistantToolWindowFactory : ToolWindowFactory {
         fun appendRecognizedText(additionalText: String) {
             val previousLength = currentText.length
             currentText += additionalText
+            currentText += "\n"
 
             if (textTimer?.isRunning == true) {
                 displayedCharCount = previousLength
@@ -207,7 +208,7 @@ class VoiceAssistantToolWindowFactory : ToolWindowFactory {
         private fun startTextAnimation() {
             stopTextAnimation()
 
-            textTimer = Timer(30) {
+            textTimer = Timer(10) {
                 if (displayedCharCount < currentText.length) {
                     displayedCharCount++
                     val displayText = currentText.substring(0, displayedCharCount)

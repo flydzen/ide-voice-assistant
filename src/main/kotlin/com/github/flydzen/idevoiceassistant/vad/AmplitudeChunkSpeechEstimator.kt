@@ -3,9 +3,9 @@ package com.github.flydzen.idevoiceassistant.vad
 import kotlin.math.sqrt
 
 class AmplitudeChunkSpeechEstimator(
-    private val gain: Float = 35f,       // усиливает RMS → вероятность
+    private val gain: Float = 40f,       // усиливает RMS → вероятность
     private val attack: Float = 0.7f,    // скорость роста (0..1)
-    private val release: Float = 0.1f   // скорость спада (0..1)
+    private val release: Float = 0.05f   // скорость спада (0..1)
 ) : ChunkSpeechEstimator {
 
     private var smoothedProb: Float = 0f

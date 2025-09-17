@@ -13,6 +13,7 @@ import com.intellij.openapi.vfs.VirtualFile
 
 sealed class Command {
     abstract fun process()
+
     class EnterText(val text: String, val project: Project) : Command() {
         override fun process() {
             invokeLater {
@@ -30,13 +31,14 @@ sealed class Command {
 
             }
         }
+
+        override fun toString(): String = "EnterText(text='$text')"
     }
 
-    class EditorNavigate(
+    class FileNavigate(
         val fileName: String,
         val project: Project,
         val packagePrefix: String? = null,
-        val line: Int? = null,
     ) : Command() {
         override fun process() {
             invokeLater {
@@ -60,7 +62,7 @@ sealed class Command {
                 }
 
                 targetFile?.let { file ->
-                    openFileInEditor(file.virtualFile, project, line)
+                    openFileInEditor(file.virtualFile, project)
                 }
             }
         }

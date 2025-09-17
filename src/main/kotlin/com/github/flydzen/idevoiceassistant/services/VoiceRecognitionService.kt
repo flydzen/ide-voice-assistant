@@ -1,5 +1,6 @@
 package com.github.flydzen.idevoiceassistant.services
 
+import com.github.flydzen.idevoiceassistant.TimeIt
 import com.github.flydzen.idevoiceassistant.executor.CommandExecutor
 import com.github.flydzen.idevoiceassistant.openai.OpenAIClient
 import com.intellij.openapi.Disposable
@@ -25,10 +26,16 @@ class VoiceRecognitionService(private val project: Project, private val scope: C
         scope.launch {
             project.service<VADService>().outputChannel.receiveAsFlow().collectLatest { filePath ->
                 if (!filePath.exists()) return@collectLatest
-                val text = OpenAIClient.speech2Text(filePath.toFile())
+                val text = TimeIt.timeIt("STT") {
+                    OpenAIClient.speech2Text(filePath.toFile())
+                }
+                if (text.isEmpty()) return@collectLatest
+                println("recognized: $text")
                 _recognizedText.emit(text)
-                val commands = OpenAIClient.textToCommands(project, text)
-                println(commands)
+                val commands = TimeIt.timeIt("TTC") {
+                    OpenAIClient.textToCommands(project, text)
+                }
+                println("command: ${commands.firstOrNull()}")
                 CommandExecutor().execute(commands)
             }
         }
@@ -42,16 +49,6 @@ class VoiceRecognitionService(private val project: Project, private val scope: C
         }
 
         _isRecognitionActive.value = true
-
-        recognitionJob = scope.launch {
-            delay(500)
-
-            if (scope.isActive) {
-                val recognizedText = "Hello, this is recognized text from the service!"
-
-                _recognizedText.emit(recognizedText)
-            }
-        }
     }
 
     fun stopRecognition() {

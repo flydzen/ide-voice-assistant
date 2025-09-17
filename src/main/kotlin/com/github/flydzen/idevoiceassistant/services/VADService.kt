@@ -61,8 +61,6 @@ class VADService(
 
     private val _volumeLevel = MutableStateFlow(0.0f)
     val volumeLevel: StateFlow<Float> = _volumeLevel.asStateFlow()
-    private var fullBuffer = ByteArray(100000)
-    private var fullBufferFill = 0
 
     init {
         scope.launch {
@@ -72,11 +70,7 @@ class VADService(
                 .collect { b ->
                     b.forEach {
                         onByte(it)
-                        if (fullBufferFill < fullBuffer.size) {
-                            fullBuffer[fullBufferFill++] = it
-                        }
                     }
-//                    onByte(b)
                 }
         }
     }
@@ -152,14 +146,9 @@ class VADService(
         try {
             val pcm = buffer.toByteArray()
             val path = createOutputPath()
-            val path2 = createOutputPath()
-
-            saveWave(fullBuffer, path2.toFile())
             saveWave(pcm, path.toFile())
             outputChannel.send(path)
-            print("Path full: $path2")
-            println("конец фразы")
-            println("Фраза сохранена: $path")
+            println("конец фразы: $path")
         } catch (e: Throwable) {
             LOG.warn("Не удалось сохранить фразу в WAV", e)
         }

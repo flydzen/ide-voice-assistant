@@ -36,13 +36,13 @@ enum class AssistantCommand(
 
     EDITOR_NAVIGATE(
         toolName = "editorNavigate",
-        description = "Open file in editor and move caret optionally to a specific line",
+        description = "Open file in editor",
         parameters = listOf(
             Parameter("fileName", "string", "File name to open (e.g., MyClass.kt)")
         ),
         build = { project, params ->
             val fileName = params["fileName"] as String
-            Command.EditorNavigate(fileName, project)
+            Command.FileNavigate(fileName, project)
         }
     ),
 
