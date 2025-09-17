@@ -11,7 +11,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 
-class CreateFileCommand(
+class CreateFileCommand private constructor(
     private val project: Project,
     private val path: String
 ) : Command() {

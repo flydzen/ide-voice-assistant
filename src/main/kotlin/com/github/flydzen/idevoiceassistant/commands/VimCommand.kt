@@ -7,7 +7,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.IdeFocusManager
 
-class VimCommand(
+class VimCommand private constructor(
     private val project: Project,
     private val command: String
 ) : Command() {

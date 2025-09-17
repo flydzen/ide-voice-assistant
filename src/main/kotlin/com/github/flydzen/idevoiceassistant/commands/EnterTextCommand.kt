@@ -7,7 +7,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 
-class EnterTextCommand(
+class EnterTextCommand private constructor(
     private val project: Project,
     private val text: String
 ) : Command() {
@@ -86,7 +86,9 @@ class EnterTextCommand(
 
         fun build(project: Project, params: Map<String, Any>): EnterTextCommand {
             val text = params["text"] as String
-            return EnterTextCommand(project, text)
+            return build(project, text)
         }
+
+        fun build(project: Project, text: String): EnterTextCommand = EnterTextCommand(project, text)
     }
 }

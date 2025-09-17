@@ -4,7 +4,7 @@ import com.github.flydzen.idevoiceassistant.Utils
 import com.github.flydzen.idevoiceassistant.openai.Parameter
 import com.intellij.openapi.project.Project
 
-class NotificationCommand(
+class NotificationCommand private constructor(
     private val project: Project,
     private val text: String
 ) : Command() {

@@ -6,7 +6,7 @@ import com.github.flydzen.idevoiceassistant.openai.Parameter
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.project.Project
 
-class StopCommand(private val project: Project) : Command() {
+class StopCommand private constructor(private val project: Project) : Command() {
 
     override fun process() {
         invokeLater {

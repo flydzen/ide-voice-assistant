@@ -35,8 +35,8 @@ class ExecuteCommandsAction : AnAction() {
         // This is where you would get your commands from wherever they come from
         // For now, returning an example list
         return listOf(
-            FileNavigateCommand(project, "Main.kt"),
-            EnterTextCommand(project, "Hello from Voice Assistant!"),
+            FileNavigateCommand.build(project, "Main.kt"),
+            EnterTextCommand.build(project, "Hello from Voice Assistant!"),
         )
     }
 }

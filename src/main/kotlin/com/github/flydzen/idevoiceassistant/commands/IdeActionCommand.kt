@@ -9,7 +9,10 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import java.awt.EventQueue.invokeLater
 
-class IdeActionCommand(private val project: Project, private val actionId: String) : Command() {
+class IdeActionCommand private constructor(
+    private val project: Project,
+    private val actionId: String
+) : Command() {
     private var rollbackData: EditorSnapshot? = null
 
     override fun process() {

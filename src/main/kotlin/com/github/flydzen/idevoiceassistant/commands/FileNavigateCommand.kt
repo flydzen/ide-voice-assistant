@@ -11,7 +11,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.search.GlobalSearchScope
 
-class FileNavigateCommand(
+class FileNavigateCommand private constructor(
     private val project: Project,
     private val fileName: String
 ) : Command() {
@@ -101,7 +101,9 @@ class FileNavigateCommand(
 
         fun build(project: Project, params: Map<String, Any>): FileNavigateCommand {
             val fileName = params["fileName"] as String
-            return FileNavigateCommand(project, fileName)
+            return build(project, fileName)
         }
+
+        fun build(project: Project, fileName: String): FileNavigateCommand = FileNavigateCommand(project, fileName)
     }
 }

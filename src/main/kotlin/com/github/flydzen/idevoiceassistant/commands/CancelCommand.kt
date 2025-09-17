@@ -3,7 +3,7 @@ package com.github.flydzen.idevoiceassistant.commands
 import com.github.flydzen.idevoiceassistant.openai.Parameter
 import com.intellij.openapi.project.Project
 
-class CancelCommand(private val previousCommand: Command?) : Command() {
+class CancelCommand private constructor(private val previousCommand: Command?) : Command() {
 
     override fun process() {
         previousCommand?.rollback()

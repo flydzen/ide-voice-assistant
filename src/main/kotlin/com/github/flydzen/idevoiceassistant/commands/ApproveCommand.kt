@@ -7,7 +7,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 
-class ApproveCommand(private val project: Project) : Command() {
+class ApproveCommand private constructor(private val project: Project) : Command() {
     private var rollbackData: EditorSnapshot? = null
 
     override fun process() {
