@@ -2,24 +2,14 @@ package com.github.flydzen.idevoiceassistant.commands
 
 import com.github.flydzen.idevoiceassistant.openai.CommandResult
 import com.intellij.openapi.project.Project
+import kotlin.reflect.full.companionObjectInstance
 
 sealed class Command {
     abstract fun process()
     abstract fun rollback()
 
     companion object {
-        val commands: List<CommandMeta> = listOf(
-            EnterTextCommand.Companion,
-            CodegenCommand.Companion,
-            FileNavigateCommand.Companion,
-            CreateFileCommand.Companion,
-            CancelCommand.Companion,
-            ApproveCommand.Companion,
-            StopCommand.Companion,
-            IdeActionCommand.Companion,
-            VimCommand.Companion,
-            NotificationCommand.Companion
-        )
+        val commands = Command::class.sealedSubclasses.mapNotNull { it.companionObjectInstance as? CommandMeta }
 
         fun getCommandByName(project: Project, prev: Command?, result: CommandResult): Command =
             when (val commandName = result.name.lowercase()) {
