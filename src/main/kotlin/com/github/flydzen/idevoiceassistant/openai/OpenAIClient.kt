@@ -11,6 +11,7 @@ import com.openai.models.responses.ToolChoiceOptions
 import java.time.Duration
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
+import com.github.flydzen.idevoiceassistant.Util
 import com.github.flydzen.idevoiceassistant.commands.AssistantCommand
 import com.openai.models.audio.AudioModel
 import com.openai.models.audio.AudioResponseFormat
@@ -77,15 +78,22 @@ object OpenAIClient {
         val response = client.audio().transcriptions().create(
             TranscriptionCreateParams.builder()
                 .model(AudioModel.GPT_4O_TRANSCRIBE)
-                .prompt("This is a user input to control Code Editor.")
+                .prompt(
+                    "Transcribe developer voice commands for an IDE. " +
+                            "Keep code terms as spoken. Plain text. " +
+                            "If audio is noise, unclear, or not a command, return an empty string. " +
+                            "Russian or English")
                 .responseFormat(AudioResponseFormat.TEXT)
                 .file(file.toPath())
+                .temperature(0.0)
                 .build()
         )
         val jsonString = response.asTranscription().text()
-        if (jsonString == "context:\\n")
+        Util.LOG.info("raw recognized: $jsonString")
+        val text = objectMapper.readValue<Map<String, Any>>(jsonString)["text"].toString()
+        if (!text.any { it.isLetter() })
             return ""
-        return objectMapper.readValue<Map<String, Any>>(jsonString)["text"].toString()
+        return text
     }
 
     fun textToCommand(text: String): List<CommandResult> {

@@ -1,6 +1,7 @@
 package com.github.flydzen.idevoiceassistant.services
 
 import com.github.flydzen.idevoiceassistant.Config
+import com.github.flydzen.idevoiceassistant.Util
 import com.github.flydzen.idevoiceassistant.audio.saveWave
 import com.github.flydzen.idevoiceassistant.vad.AmplitudeChunkSpeechEstimator
 import com.github.flydzen.idevoiceassistant.vad.ChunkSpeechEstimator
@@ -26,6 +27,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import kotlin.math.ceil
 
 @Service(Service.Level.PROJECT)
 class VADService(
@@ -40,10 +42,12 @@ class VADService(
 
     // Окно для VAD (Silero ожидает 512 семплов при 16кГц)
     private val windowSamples = 512
+    private val windowMs = windowSamples * 1000 / Config.audioFormat.sampleRate
     private val windowBytes = windowSamples * Config.bytesPerSample
 
     // Сколько «окон тишины» ждём, чтобы закрыть фразу (~192 мс при 512 сэмплах)
     private val endSilenceWindows = 16
+    private val minPhraseMs = 500
 
     // Буферизация входных СЕМПЛОВ и исходных байтов на размер окна
     private val windowFloat = FloatArray(windowSamples)
@@ -57,6 +61,8 @@ class VADService(
     // Состояние фразы
     private var inSpeech = false
     private var silenceCounter = 0
+    private var phraseCounter = 0
+
     private var phraseBuffer: ByteArrayOutputStream? = null
 
     private val _volumeLevel = MutableStateFlow(0.0f)
@@ -119,8 +125,9 @@ class VADService(
             if (speech) {
                 inSpeech = true
                 silenceCounter = 0
+                phraseCounter = 1
                 phraseBuffer = ByteArrayOutputStream().also { it.write(rawBytes, 0, rawLen) }
-                print("начало фразы")
+                Util.LOG.info("VAD: начало фразы")
             } else {
                 // тишина, остаёмся вне речи
             }
@@ -129,6 +136,7 @@ class VADService(
             phraseBuffer?.write(rawBytes, 0, rawLen)
             if (speech) {
                 silenceCounter = 0
+                phraseCounter++
             } else {
                 silenceCounter++
                 if (silenceCounter >= endSilenceWindows) {
@@ -144,11 +152,17 @@ class VADService(
         val buffer = phraseBuffer ?: return
         phraseBuffer = null
         try {
+            val durationMs = phraseCounter * windowMs
+            if (durationMs < minPhraseMs) {
+                Util.LOG.info("VAD: short phrase, $durationMs ms")
+                return
+            }
+
             val pcm = buffer.toByteArray()
             val path = createOutputPath()
             saveWave(pcm, path.toFile())
             outputChannel.send(path)
-            println("конец фразы: $path")
+            Util.LOG.info("VAD: конец фразы - $path")
         } catch (e: Throwable) {
             LOG.warn("Не удалось сохранить фразу в WAV", e)
         }

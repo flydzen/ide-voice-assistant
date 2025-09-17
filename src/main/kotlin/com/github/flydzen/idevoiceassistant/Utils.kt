@@ -7,9 +7,9 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
 
-class TimeIt {
+class Util {
     companion object {
-        private val LOG: Logger = thisLogger()
+        val LOG: Logger = thisLogger()
 
         fun <T> timeIt(name: String, block: () -> T): T {
             val start = System.currentTimeMillis()
