@@ -2,6 +2,7 @@ package com.github.flydzen.idevoiceassistant.actions
 
 import com.github.flydzen.idevoiceassistant.executor.CommandExecutor
 import com.github.flydzen.idevoiceassistant.openai.OpenAIClient
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -43,6 +44,8 @@ class OpenAIRunAction : AnAction("Run OpenAI Voice Assistant") {
             }
         }
     }
+
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
     private fun getTextToProcess(editor: Editor?): String? {
         if (editor == null) return ""
