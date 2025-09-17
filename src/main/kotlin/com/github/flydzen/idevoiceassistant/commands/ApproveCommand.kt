@@ -10,10 +10,6 @@ import com.intellij.openapi.project.Project
 class ApproveCommand(private val project: Project) : Command() {
     private var rollbackData: EditorSnapshot? = null
 
-    override val toolName: String = "approve"
-    override val description: String = "Approve, changes. Any synonyms of approve, approve, accept should trigger that command"
-    override val parameters: List<Parameter> = emptyList()
-
     override fun process() {
         invokeLater {
             val editor = project.service<FileEditorManager>().selectedTextEditor ?: return@invokeLater
@@ -27,7 +23,11 @@ class ApproveCommand(private val project: Project) : Command() {
         rollbackData?.rollbackEditor(project)
     }
 
-    companion object {
+    companion object : CommandMeta {
+        override val toolName: String = "approve"
+        override val description: String = "Approve, changes. Any synonyms of approve, approve, accept should trigger that command"
+        override val parameters: List<Parameter> = emptyList()
+
         fun build(project: Project): ApproveCommand = ApproveCommand(project)
     }
 }

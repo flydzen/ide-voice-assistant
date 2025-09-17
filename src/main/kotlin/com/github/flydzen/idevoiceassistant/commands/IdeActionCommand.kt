@@ -12,16 +12,6 @@ import java.awt.EventQueue.invokeLater
 class IdeActionCommand(private val project: Project, private val actionId: String) : Command() {
     private var rollbackData: EditorSnapshot? = null
 
-    override val toolName: String = "ideAction"
-
-    override val description: String = "" +
-            "Run Intellij IDEA action via `ActionManager.getInstance().getAction`. " +
-            "Use it only if you know exactly action name."
-
-    override val parameters: List<Parameter> = listOf(
-        Parameter("actionId", "string", "actionId of Intellij IDEA action (e.g., ReformatCode, Kotlin.NewFile)")
-    )
-
     override fun process() {
         invokeLater {
             val editor = project.service<FileEditorManager>().selectedTextEditor
@@ -53,7 +43,15 @@ class IdeActionCommand(private val project: Project, private val actionId: Strin
 
     override fun toString(): String = "RunIdeAction(actionId=\"$actionId\")"
 
-    companion object {
+    companion object : CommandMeta {
+        override val toolName: String = "ideAction"
+        override val description: String = "" +
+                "Run Intellij IDEA action via `ActionManager.getInstance().getAction`. " +
+                "Use it only if you know exactly action name."
+        override val parameters: List<Parameter> = listOf(
+            Parameter("actionId", "string", "actionId of Intellij IDEA action (e.g., ReformatCode, Kotlin.NewFile)")
+        )
+
         fun build(project: Project, params: Map<String, Any>): IdeActionCommand {
             val actionId = params["actionId"] as String
             return IdeActionCommand(project, actionId)

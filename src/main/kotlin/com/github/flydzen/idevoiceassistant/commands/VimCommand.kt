@@ -13,10 +13,6 @@ class VimCommand(
 ) : Command() {
     private var rollbackData: EditorSnapshot? = null
 
-    override val toolName: String = "vimCommand"
-    override val description: String = "Execute Vim command. Use it only if you know exactly command."
-    override val parameters: List<Parameter> = listOf(Parameter("command", "string", "Vim command to be executed. If it is ex-command, start with `:`"))
-
     override fun process() {
         invokeLater {
             val fileEditorManager = FileEditorManager.getInstance(project)
@@ -45,7 +41,13 @@ class VimCommand(
 
     override fun toString(): String = "VimCommand(command='$command')"
 
-    companion object {
+    companion object : CommandMeta {
+        override val toolName: String = "vimCommand"
+        override val description: String = "Execute Vim command. Use it only if you know exactly command."
+        override val parameters: List<Parameter> = listOf(
+            Parameter("command", "string", "Vim command to be executed. If it is ex-command, start with `:`")
+        )
+
         fun build(project: Project, params: Map<String, Any>): VimCommand {
             val command = params["command"] as String
             return VimCommand(project, command)

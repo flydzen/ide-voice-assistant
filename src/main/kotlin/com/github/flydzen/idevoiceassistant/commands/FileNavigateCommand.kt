@@ -17,12 +17,6 @@ class FileNavigateCommand(
 ) : Command() {
     private var rollbackData: RollbackData? = null
 
-    override val toolName: String = "fileNavigate"
-    override val description: String = "Open file in editor"
-    override val parameters: List<Parameter> = listOf(
-        Parameter("fileName", "string", "File name to open (e.g., MyClass.kt)")
-    )
-
     data class RollbackData(
         val previousFile: VirtualFile?,
         val previousCaretOffset: Int
@@ -96,7 +90,13 @@ class FileNavigateCommand(
 
     override fun toString(): String = "FileNavigate(fileName='$fileName')"
 
-    companion object {
+    companion object : CommandMeta {
+        override val toolName: String = "fileNavigate"
+        override val description: String = "Open file in editor"
+        override val parameters: List<Parameter> = listOf(
+            Parameter("fileName", "string", "File name to open (e.g., MyClass.kt)")
+        )
+
         fun build(project: Project, params: Map<String, Any>): FileNavigateCommand {
             val fileName = params["fileName"] as String
             return FileNavigateCommand(project, fileName)

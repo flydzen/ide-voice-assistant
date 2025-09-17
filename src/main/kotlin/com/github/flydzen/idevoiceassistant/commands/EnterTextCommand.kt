@@ -13,12 +13,6 @@ class EnterTextCommand(
 ) : Command() {
     private var rollbackData: RollbackData? = null
 
-    override val toolName: String = "insert"
-    override val description: String = "Insert text at the cursor"
-    override val parameters: List<Parameter> = listOf(
-        Parameter("text", "string", "Text to insert")
-    )
-
     data class RollbackData(
         val insertOffset: Int,
         val insertLength: Int,
@@ -81,7 +75,13 @@ class EnterTextCommand(
 
     override fun toString(): String = "EnterText(text='$text')"
 
-    companion object {
+    companion object : CommandMeta {
+        override val toolName: String = "insert"
+        override val description: String = "Insert text at the cursor"
+        override val parameters: List<Parameter> = listOf(
+            Parameter("text", "string", "Text to insert")
+        )
+
         fun build(project: Project, params: Map<String, Any>): EnterTextCommand {
             val text = params["text"] as String
             return EnterTextCommand(project, text)

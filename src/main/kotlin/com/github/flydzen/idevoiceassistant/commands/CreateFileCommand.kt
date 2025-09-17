@@ -15,11 +15,6 @@ class CreateFileCommand(
     private val project: Project,
     private val path: String
 ) : Command() {
-    override val toolName: String = "createFile"
-    override val description: String = "Create new file"
-    override val parameters: List<Parameter> = listOf(
-        Parameter("path", "string", "File name or file path to create. (e.g., MyClass.kt or src/main/kotlin/MyClass.kt)")
-    )
 
     override fun process() {
         invokeLater {
@@ -72,8 +67,14 @@ class CreateFileCommand(
 
     override fun toString(): String = "CreateFile(path=\"$path\")"
 
-    companion object {
+    companion object : CommandMeta {
         private val LOG = thisLogger()
+
+        override val toolName: String = "createFile"
+        override val description: String = "Create new file"
+        override val parameters: List<Parameter> = listOf(
+            Parameter("path", "string", "File name or file path to create. (e.g., MyClass.kt or src/main/kotlin/MyClass.kt)")
+        )
 
         fun build(project: Project, params: Map<String, Any>): CreateFileCommand {
             val path = params["path"] as String
