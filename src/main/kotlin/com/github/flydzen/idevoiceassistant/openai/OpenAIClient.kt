@@ -4,7 +4,9 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.github.flydzen.idevoiceassistant.Utils
 import com.github.flydzen.idevoiceassistant.commands.AssistantCommand
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.project.Project
 import com.openai.client.OpenAIClient
 import com.openai.client.okhttp.OpenAIOkHttpClient
 import com.openai.core.JsonValue
@@ -114,20 +116,27 @@ Rules:
         return text
     }
 
-    fun textToCommand(text: String): List<CommandResult> {
-        val inputs = mutableListOf(
+    fun textToCommand(project: Project, text: String): List<CommandResult> {
+        val inputs = mutableListOf<ResponseInputItem>()
+        inputs.add(
             ResponseInputItem.ofMessage(
                 ResponseInputItem.Message.builder()
                     .role(ResponseInputItem.Message.Role.SYSTEM)
                     .addInputTextContent(PROMPT)
                     .build()
-            ),
+            )
+        )
+
+        val previousCommands = getPreviousNCommands(project, 5)
+        inputs.addAll(previousCommands)
+
+        inputs.add(
             ResponseInputItem.ofMessage(
                 ResponseInputItem.Message.builder()
                     .role(ResponseInputItem.Message.Role.USER)
                     .addInputTextContent(text)
                     .build()
-            ),
+            )
         )
 
         val builder = ResponseCreateParams.builder()
@@ -156,5 +165,19 @@ Rules:
             }
             CommandResult(it.name(), params = argumentsMap)
         }
+    }
+
+    @Suppress("SameParameterValue")
+    private fun getPreviousNCommands(project: Project, n: Int): List<ResponseInputItem> {
+        val previousCommands = project.service<CommandHistoryStorage>().getLastNCommands(n)
+        val responseInputItems = previousCommands.map { cmd ->
+            ResponseInputItem.ofMessage(
+                ResponseInputItem.Message.builder()
+                    .role(ResponseInputItem.Message.Role.USER)
+                    .addInputTextContent(cmd)
+                    .build()
+            )
+        }
+        return responseInputItems
     }
 }

@@ -2,6 +2,7 @@ package com.github.flydzen.idevoiceassistant.services
 
 import com.github.flydzen.idevoiceassistant.Utils
 import com.github.flydzen.idevoiceassistant.executor.CommandExecutor
+import com.github.flydzen.idevoiceassistant.openai.CommandHistoryStorage
 import com.github.flydzen.idevoiceassistant.openai.OpenAIClient
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
@@ -35,8 +36,9 @@ class VoiceRecognitionService(private val project: Project, private val scope: C
                 if (text.isEmpty()) return@collectLatest
                 println("recognized: $text")
                 _recognizedText.emit(text)
+                project.service<CommandHistoryStorage>().addCommand(text)
                 val commands = Utils.timeIt("TTC") {
-                    OpenAIClient.textToCommand(text)
+                    OpenAIClient.textToCommand(project, text)
                 }
                 println("command: ${commands.firstOrNull()}")
                 CommandExecutor().execute(project, commands)

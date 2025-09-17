@@ -29,7 +29,7 @@ class OpenAIRunAction : AnAction("Run OpenAI Voice Assistant") {
 
         ApplicationManager.getApplication().executeOnPooledThread {
             try {
-                val commands = OpenAIClient.textToCommand(textToProcess)
+                val commands = OpenAIClient.textToCommand(project, textToProcess)
                 println(commands)
                 CommandExecutor().execute(project, commands)
             } catch (e: Exception) {
