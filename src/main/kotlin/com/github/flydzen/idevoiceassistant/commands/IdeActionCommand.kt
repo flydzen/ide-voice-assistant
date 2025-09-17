@@ -52,6 +52,8 @@ class IdeActionCommand(private val project: Project, private val actionId: Strin
             Parameter("actionId", "string", "actionId of Intellij IDEA action (e.g., ReformatCode, Kotlin.NewFile)")
         )
 
+        override fun build(project: Project, previousCommand: Command?, params: Map<String, Any>): Command = build(project, params)
+
         fun build(project: Project, params: Map<String, Any>): IdeActionCommand {
             val actionId = params["actionId"] as String
             return IdeActionCommand(project, actionId)

@@ -76,6 +76,8 @@ class CreateFileCommand(
             Parameter("path", "string", "File name or file path to create. (e.g., MyClass.kt or src/main/kotlin/MyClass.kt)")
         )
 
+        override fun build(project: Project, previousCommand: Command?, params: Map<String, Any>): Command = build(project, params)
+
         fun build(project: Project, params: Map<String, Any>): CreateFileCommand {
             val path = params["path"] as String
             return CreateFileCommand(project, path)

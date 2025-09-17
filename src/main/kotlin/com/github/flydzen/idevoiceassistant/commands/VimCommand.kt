@@ -48,6 +48,8 @@ class VimCommand(
             Parameter("command", "string", "Vim command to be executed. If it is ex-command, start with `:`")
         )
 
+        override fun build(project: Project, previousCommand: Command?, params: Map<String, Any>): Command = build(project, params)
+
         fun build(project: Project, params: Map<String, Any>): VimCommand {
             val command = params["command"] as String
             return VimCommand(project, command)

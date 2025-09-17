@@ -32,6 +32,9 @@ class CodegenCommand(private val project: Project, private val prompt: String) :
             Parameter("prompt", "string", "test-based prompt for code generation. No code. Just english text.")
         )
 
+        override fun build(project: Project, previousCommand: Command?, params: Map<String, Any>): Command =
+            build(project, params)
+
         fun build(project: Project, params: Map<String, Any>): CodegenCommand {
             val prompt = params["prompt"] as String
             return CodegenCommand(project, prompt)

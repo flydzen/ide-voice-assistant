@@ -97,6 +97,8 @@ class FileNavigateCommand(
             Parameter("fileName", "string", "File name to open (e.g., MyClass.kt)")
         )
 
+        override fun build(project: Project, previousCommand: Command?, params: Map<String, Any>): Command = build(project, params)
+
         fun build(project: Project, params: Map<String, Any>): FileNavigateCommand {
             val fileName = params["fileName"] as String
             return FileNavigateCommand(project, fileName)

@@ -26,6 +26,8 @@ class NotificationCommand(
             Parameter("research", "boolean", "Whether to redirect question to more powerfull model. Don't use if you need some information from user"),
         )
 
+        override fun build(project: Project, previousCommand: Command?, params: Map<String, Any>): Command = build(project, params)
+
         fun build(project: Project, params: Map<String, Any>): NotificationCommand {
             val text = params["text"] as String
             return NotificationCommand(project, text)

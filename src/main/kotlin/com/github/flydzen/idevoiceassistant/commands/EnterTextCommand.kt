@@ -82,6 +82,8 @@ class EnterTextCommand(
             Parameter("text", "string", "Text to insert")
         )
 
+        override fun build(project: Project, previousCommand: Command?, params: Map<String, Any>): Command = build(project, params)
+
         fun build(project: Project, params: Map<String, Any>): EnterTextCommand {
             val text = params["text"] as String
             return EnterTextCommand(project, text)

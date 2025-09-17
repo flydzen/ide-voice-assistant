@@ -23,6 +23,8 @@ class StopCommand(private val project: Project) : Command() {
         override val description: String = "Stop current command. Also can be called by cancel, rollback and synonyms"
         override val parameters: List<Parameter> = emptyList()
 
+        override fun build(project: Project, previousCommand: Command?, params: Map<String, Any>): Command = build(project)
+
         fun build(project: Project): StopCommand = StopCommand(project)
     }
 }
