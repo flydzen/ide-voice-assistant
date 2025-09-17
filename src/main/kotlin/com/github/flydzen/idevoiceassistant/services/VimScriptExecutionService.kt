@@ -28,8 +28,11 @@ class VimScriptExecutionService(private val project: Project, private val scope:
                     return@withVimPlugin
                 }
                 val vimContext = injector.executionContextManager.getEditorExecutionContext(vimEditor)
+                val normalizedVimScript = vimScript.removeSuffix(">")
                 injector.vimscriptExecutor.execute(
-                    vimScript, vimEditor, vimContext,
+                    script = normalizedVimScript,
+                    editor = vimEditor,
+                    context = vimContext,
                     skipHistory = true,
                     indicateErrors = true
                 )
