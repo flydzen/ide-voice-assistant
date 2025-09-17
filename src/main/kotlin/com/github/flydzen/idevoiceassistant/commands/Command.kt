@@ -7,8 +7,8 @@ import com.github.flydzen.idevoiceassistant.services.VimScriptExecutionService
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.components.service
-import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
@@ -96,19 +96,20 @@ sealed class Command {
         private val LOG = thisLogger()
 
         override fun process() {
+            val baseDir = resolveBaseDirectory() ?: run {
+                LOG.warn("CreateFile: base directory not resolved")
+                return
+            }
+
+            val parts = path.replace('\\', '/').trim('/').split('/').filter { it.isNotBlank() }
+            if (parts.isEmpty()) {
+                LOG.warn("CreateFile: empty path")
+                return
+            }
+
             invokeLater {
                 WriteCommandAction.runWriteCommandAction(project) {
                     try {
-                        val baseDir = resolveBaseDirectory() ?: run {
-                            LOG.warn("CreateFile: base directory not resolved")
-                            return@runWriteCommandAction
-                        }
-
-                        val parts = path.replace('\\', '/').trim('/').split('/').filter { it.isNotBlank() }
-                        if (parts.isEmpty()) {
-                            LOG.warn("CreateFile: empty path")
-                            return@runWriteCommandAction
-                        }
                         val fileName = parts.last()
                         val parent = ensureSubdirs(baseDir, parts.dropLast(1))
 
