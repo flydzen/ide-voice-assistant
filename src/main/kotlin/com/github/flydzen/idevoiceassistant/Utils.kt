@@ -35,7 +35,7 @@ object Utils {
     }
 
     private fun createTempWavFile(prefix: String): File {
-        val file = createTempFile(prefix = prefix, suffix = ".waf").toFile()
+        val file = createTempFile(prefix = prefix, suffix = ".wav").toFile()
         LOG.info("Audio file created: ${file.absolutePath}")
         return file
     }
