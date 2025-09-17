@@ -4,6 +4,14 @@ import com.github.flydzen.idevoiceassistant.VoiceAssistantBundle
 import com.github.flydzen.idevoiceassistant.codeGeneration.AICodeGenActionsExecutor
 import com.github.flydzen.idevoiceassistant.editor
 import com.github.flydzen.idevoiceassistant.showNotification
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionUiKind
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -89,11 +97,34 @@ sealed class Command {
         }
     }
 
-    class DirNavigate(val dirName: String) : Command() {
+    class RunIdeAction(private val actionId: String, private val project: Project) : Command() {
         override fun process() {
-            TODO("Not yet implemented")
+            invokeLater {
+                val action = ActionManager.getInstance().getAction(actionId) ?: return@invokeLater
+
+                val editor = FileEditorManager.getInstance(project).selectedTextEditor
+                val dataContext = SimpleDataContext.builder()
+                    .add(CommonDataKeys.PROJECT, project)
+                    .apply { if (editor != null) add(CommonDataKeys.EDITOR, editor) }
+                    .build()
+
+                val presentation: Presentation = action.templatePresentation.clone()
+
+                val event = AnActionEvent.createEvent(
+                    action,
+                    dataContext,
+                    presentation,
+                    ActionPlaces.UNKNOWN,
+                    ActionUiKind.NONE,
+                    null
+                )
+                ActionUtil.performAction(action, event)
+            }
         }
+
+        override fun toString(): String = "RunIdeAction(actionId=\"$actionId\")"
     }
+
 
     class Codegen(private val prompt: String, private val project: Project) : Command() {
         override fun process() {

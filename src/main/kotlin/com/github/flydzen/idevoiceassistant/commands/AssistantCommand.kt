@@ -73,6 +73,18 @@ enum class AssistantCommand(
         }
     ),
 
+    IDE_ACTION(
+        toolName = "ideAction",
+        description = "Run Intellij IDEA action. Use it only if you know exactly action name.",
+        parameters = listOf(
+            Parameter("action", "string", "Name of Intellij IDEA action (e.g., ReformatCode)")
+        ),
+        build = { project, params ->
+            val fileName = params["action"] as String
+            Command.RunIdeAction(fileName, project)
+        }
+    ),
+
     IDONTKNOW(
         toolName = "idontknow",
         description = "If you don't know what to do",

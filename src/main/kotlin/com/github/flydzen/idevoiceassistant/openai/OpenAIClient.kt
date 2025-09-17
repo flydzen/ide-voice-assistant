@@ -50,6 +50,7 @@ Rules:
 - If intent is unclear, not an IDE command, or required parameters are missing, call idontknow(reason).
 - Fill only parameters explicitly present in the utterance; do not invent or guess values.
 - Preserve identifiers, paths, filenames, symbols, and casing verbatim.
+- Apply and other synonyms means "approve", not an ideAction.
     """.trimIndent()
     private val objectMapper = jacksonObjectMapper()
 
