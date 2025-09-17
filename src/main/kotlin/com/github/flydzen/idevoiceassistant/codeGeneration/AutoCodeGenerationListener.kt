@@ -18,6 +18,7 @@ class AutoCodeGenerationListener(private val project: Project) : AICodeGeneratio
             val popupComponent = controller.component
             val editorTextField = UIUtil.findComponentOfType(popupComponent, EditorTextField::class.java) ?: return@invokeLater
             editorTextField.text = promptText
+            popupComponent.repaint()
             AICodeGenerationProgressListener.submit(editor, SourceAction.GENERATE_CODE_INPLACE)
         }
     }

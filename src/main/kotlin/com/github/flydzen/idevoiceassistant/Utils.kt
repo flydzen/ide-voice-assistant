@@ -1,5 +1,6 @@
 package com.github.flydzen.idevoiceassistant
 
+import com.intellij.lang.Language
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.thisLogger
@@ -7,6 +8,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
+import com.intellij.psi.PsiDocumentManager
 import java.io.ByteArrayInputStream
 import java.io.File
 import javax.sound.sampled.AudioFileFormat
@@ -52,4 +54,11 @@ object Utils {
             showNotification(this, VoiceAssistantBundle.message("notification.editor.out.of.focus"))
             null
         }
+
+    fun Project.language(): Language? {
+        val editor = FileEditorManager.getInstance(this).selectedTextEditor ?: return null
+        val document = editor.document
+        val psiFile = PsiDocumentManager.getInstance(this).getPsiFile(document) ?: return null
+        return psiFile.language
+    }
 }

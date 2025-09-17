@@ -236,14 +236,7 @@ sealed class Command {
 
     class Cancel(val project: Project, val previousCommand: Command?) : Command() {
         override fun process() {
-            if (previousCommand !is Codegen) {
-                previousCommand?.rollback()
-                return
-            }
-            invokeLater {
-                val editor = project.editor() ?: return@invokeLater
-                AICodeGenActionsExecutor.discard(editor)
-            }
+            previousCommand?.rollback()
         }
 
         override fun rollback() {}

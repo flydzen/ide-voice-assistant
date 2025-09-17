@@ -3,9 +3,11 @@ package com.github.flydzen.idevoiceassistant.openai
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.github.flydzen.idevoiceassistant.Config
+import com.github.flydzen.idevoiceassistant.Utils.language
 import com.github.flydzen.idevoiceassistant.commands.AssistantCommand
 import com.github.flydzen.idevoiceassistant.services.Stage
 import com.github.flydzen.idevoiceassistant.services.StageService
+import com.intellij.lang.Language
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
@@ -55,7 +57,7 @@ object OpenAIClient {
         .takeIf { !it.isNullOrBlank() }
         ?: error("LITELLM_API_KEY environment variable is not set")
 
-    private val PROMPT_BASE = """
+    private fun getPromptBase(language: Language?) = """
 You are an IDE voice command router (ru/en). Map the user’s utterance to exactly one function call.
 
 Rules:
@@ -66,8 +68,9 @@ Rules:
 - If the query needs deeper reasoning/research, call idontknow(reason, research=True) to escalate to a heavier model.
 - Apply and other synonyms means "approve", not an ideAction.
 - You can a little guess what user prefer to do
+${if (language != null) "- You must use ${language.displayName} language" else ""}
 """.trimIndent()
-    private val PROMPT_LIGHT = PROMPT_BASE + """
+    private fun getPromptLight(language: Language?) = getPromptBase(language) + """
 - If you need to call Intellij Action, do idontknow(research=True).        
 """.trimIndent()
 
@@ -150,13 +153,15 @@ Rules:
     }
 
     private fun getInputs(project: Project, text: String, model: GPTModels): List<ResponseInputItem> {
+        val language = project.language()
         val inputs = mutableListOf<ResponseInputItem>()
         inputs.add(
             ResponseInputItem.ofMessage(
                 ResponseInputItem.Message.builder()
                     .role(ResponseInputItem.Message.Role.SYSTEM)
-                    .addInputTextContent(if (model == GPTModels.GPT4O_MINI) PROMPT_LIGHT else PROMPT_BASE)
-                    .build()
+                    .addInputTextContent(
+                        if (model == GPTModels.GPT4O_MINI) getPromptLight(language) else getPromptBase(language)
+                    ).build()
             )
         )
 
