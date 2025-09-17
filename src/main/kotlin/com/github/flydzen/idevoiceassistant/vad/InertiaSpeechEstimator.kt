@@ -3,7 +3,7 @@ package com.github.flydzen.idevoiceassistant.vad
 
 class InertiaSpeechEstimator(
     private val delegate: ChunkSpeechEstimator,
-    private val attack: Float = 0.7f,   // скорость роста (0..1)
+    private val attack: Float = 0.85f,   // скорость роста (0..1)
     private val release: Float = 0.1f, // скорость спада (0..1)
     private val gain: Float = 1.5f,     // дополнительное усиление (опционально)
     private val floor: Float = 0f,      // нижняя граница после усиления

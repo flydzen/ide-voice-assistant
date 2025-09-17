@@ -99,7 +99,8 @@ enum class AssistantCommand(
         toolName = "idontknow",
         description = "If you don't know what to do",
         parameters = listOf(
-            Parameter("reason", "string", "The reason you don't know")
+            Parameter("reason", "string", "The reason you don't know"),
+            Parameter("research", "boolean", "Whether to redirect question to more powerfull model"),
         ),
         build = { project, params ->
             Command.NotificationCommand(params["reason"] as String, project)

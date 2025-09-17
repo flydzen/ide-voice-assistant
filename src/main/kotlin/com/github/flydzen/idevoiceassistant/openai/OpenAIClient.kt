@@ -22,7 +22,7 @@ import java.io.File
 import java.time.Duration
 
 
-enum class ResponsesModels(val modelName: String) {
+enum class GPTModels(val modelName: String) {
     GPT5_NANO("openai/gpt-5-nano"),     // works slow and good
     GPT5("openai/gpt-5"),               // for super heavy tasks
     GPT4O_MINI("openai/gpt-4o-mini"),   // works fast and good
@@ -42,7 +42,7 @@ data class Parameter(
 
 data class CommandResult(
     val name: String,
-    val params: Map<String, Any>
+    val params: Map<String, Any>,
 )
 
 object OpenAIClient {
@@ -53,18 +53,21 @@ object OpenAIClient {
         .takeIf { !it.isNullOrBlank() }
         ?: error("LITELLM_API_KEY environment variable is not set")
 
-    private val PROMPT = """
-You are an IDE voice command router (ru/en).
-Map the user’s utterance to exactly one function call.
+    private val PROMPT_BASE = """
+You are an IDE voice command router (ru/en). Map the user’s utterance to exactly one function call.
 
 Rules:
-- Call exactly one function. Output must be a function call only (no natural language).
+- Output must be a function call only (no natural language).
 - Choose the most specific function matching the intent.
-- If intent is unclear, not an IDE command, or required parameters are missing, call idontknow(reason).
-- Fill only parameters explicitly present in the utterance; do not invent or guess values.
-- Preserve identifiers, paths, filenames, symbols, and casing verbatim.
+- Do not invent or guess argument values. Preserve identifiers, paths, filenames, symbols, and casing verbatim.
+- If intent is unclear, parameters are missing, or the query likely needs deeper reasoning/research, call idontknow with a concise reason; set research=true to escalate to a heavier model.
 - Apply and other synonyms means "approve", not an ideAction.
-    """.trimIndent()
+- You can a little guess what user prefer to do
+""".trimIndent()
+    private val PROMPT_LIGHT = PROMPT_BASE + """
+- If you need to call Intellij Action, do idontknow(research=True).        
+""".trimIndent()
+
     private val objectMapper = jacksonObjectMapper()
 
     private val client: OpenAIClient by lazy {
@@ -115,12 +118,12 @@ Rules:
         return text
     }
 
-    fun textToCommand(project: Project, text: String): List<CommandResult> {
-        val inputs = getInputs(project, text)
-        val params = getParams(inputs)
+    fun textToCommand(project: Project, text: String, model: GPTModels = GPTModels.GPT4O_MINI): List<CommandResult> {
+        val inputs = getInputs(project, text, model)
+        val params = getParams(inputs, model)
         val response = client.responses().create(params)
         LOG.info("TTC response: $response")
-        return response.output()
+        val commands = response.output()
             .asSequence()
             .mapNotNull { it.takeIf { it.isFunctionCall() }?.asFunctionCall() }
             .map { functionCall ->
@@ -135,15 +138,20 @@ Rules:
                 CommandResult(functionCall.name(), params = params)
             }
             .toList()
+        if (model != GPTModels.GPT5 && commands.any { it.name == "idontknow" && it.params["research"] == true }){
+            LOG.info("Escalate to GPT5 for: $text")
+            return textToCommand(project, text, GPTModels.GPT5)
+        }
+        return commands
     }
 
-    private fun getInputs(project: Project, text: String): List<ResponseInputItem> {
+    private fun getInputs(project: Project, text: String, model: GPTModels): List<ResponseInputItem> {
         val inputs = mutableListOf<ResponseInputItem>()
         inputs.add(
             ResponseInputItem.ofMessage(
                 ResponseInputItem.Message.builder()
                     .role(ResponseInputItem.Message.Role.SYSTEM)
-                    .addInputTextContent(PROMPT)
+                    .addInputTextContent(if (model == GPTModels.GPT4O_MINI) PROMPT_LIGHT else PROMPT_BASE)
                     .build()
             )
         )
@@ -169,9 +177,9 @@ Rules:
                 .build()
         )
 
-    private fun getParams(inputs: List<ResponseInputItem>): ResponseCreateParams {
+    private fun getParams(inputs: List<ResponseInputItem>, model: GPTModels): ResponseCreateParams {
         val builder = ResponseCreateParams.builder()
-            .model(ResponsesModel.ofString(ResponsesModels.GPT4O_MINI.modelName))
+            .model(ResponsesModel.ofString(model.modelName))
             .input(ResponseCreateParams.Input.ofResponse(inputs))
             .toolChoice(ToolChoiceOptions.REQUIRED)
         AssistantCommand.entries.forEach { cmd ->

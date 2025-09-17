@@ -3,12 +3,15 @@ package com.github.flydzen.idevoiceassistant.commands
 import com.github.flydzen.idevoiceassistant.Utils
 import com.github.flydzen.idevoiceassistant.Utils.editor
 import com.github.flydzen.idevoiceassistant.codeGeneration.AICodeGenActionsExecutor
+import com.github.flydzen.idevoiceassistant.executor.CommandExecutor
+import com.github.flydzen.idevoiceassistant.openai.OpenAIClient
 import com.github.flydzen.idevoiceassistant.services.VimScriptExecutionService
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -16,6 +19,8 @@ import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.search.GlobalSearchScope
 
 sealed class Command {
+    protected val LOG = thisLogger()
+
     abstract fun process()
 
     class EnterText(val text: String, val project: Project) : Command() {
