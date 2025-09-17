@@ -1,24 +1,18 @@
 package com.github.flydzen.idevoiceassistant.commands
 
-import com.github.flydzen.idevoiceassistant.VoiceAssistantBundle
+import com.github.flydzen.idevoiceassistant.Utils
+import com.github.flydzen.idevoiceassistant.Utils.editor
 import com.github.flydzen.idevoiceassistant.codeGeneration.AICodeGenActionsExecutor
-import com.github.flydzen.idevoiceassistant.editor
-import com.github.flydzen.idevoiceassistant.showNotification
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.ActionPlaces
-import com.intellij.openapi.actionSystem.ActionUiKind
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.openapi.vfs.VirtualFile
 
 sealed class Command {
     abstract fun process()
@@ -137,7 +131,7 @@ sealed class Command {
 
     class NotificationCommand(private val text: String, val project: Project) : Command() {
         override fun process() {
-            showNotification(project, "Not recognized: $text")
+            Utils.showNotification(project, "Not recognized: $text")
         }
     }
 

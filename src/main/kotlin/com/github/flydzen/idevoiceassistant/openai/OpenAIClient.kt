@@ -1,22 +1,24 @@
 package com.github.flydzen.idevoiceassistant.openai
 
-import com.openai.client.okhttp.OpenAIOkHttpClient
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
+import com.github.flydzen.idevoiceassistant.commands.AssistantCommand
+import com.intellij.openapi.diagnostic.thisLogger
 import com.openai.client.OpenAIClient
+import com.openai.client.okhttp.OpenAIOkHttpClient
 import com.openai.core.JsonValue
-import com.openai.models.*
+import com.openai.models.Reasoning
+import com.openai.models.ReasoningEffort
+import com.openai.models.ResponsesModel
+import com.openai.models.audio.AudioModel
+import com.openai.models.audio.AudioResponseFormat
+import com.openai.models.audio.transcriptions.TranscriptionCreateParams
 import com.openai.models.responses.FunctionTool
 import com.openai.models.responses.ResponseCreateParams
 import com.openai.models.responses.ResponseInputItem
 import com.openai.models.responses.ToolChoiceOptions
-import java.time.Duration
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
-import com.github.flydzen.idevoiceassistant.Util
-import com.github.flydzen.idevoiceassistant.commands.AssistantCommand
-import com.openai.models.audio.AudioModel
-import com.openai.models.audio.AudioResponseFormat
-import com.openai.models.audio.transcriptions.TranscriptionCreateParams
 import java.io.File
+import java.time.Duration
 
 
 data class Parameter(
@@ -36,6 +38,8 @@ data class CommandResult(
 )
 
 object OpenAIClient {
+    private val LOG = thisLogger()
+
     const val LITELLM_URL: String = "https://litellm.labs.jb.gg"
     private val LITELLM_API_KEY: String = System.getenv("LITELLM_API_KEY")
         ?: error("LITELLM_API_KEY environment variable is not set")
@@ -95,7 +99,7 @@ Rules:
                 .build()
         )
         val jsonString = response.asTranscription().text()
-        Util.LOG.info("raw recognized: $jsonString")
+        LOG.info("raw recognized: $jsonString")
         val text = objectMapper.readValue<Map<String, Any>>(jsonString)["text"].toString()
         if (!text.any { it.isLetter() })
             return ""

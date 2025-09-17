@@ -1,8 +1,7 @@
 package com.github.flydzen.idevoiceassistant.services
 
 import com.github.flydzen.idevoiceassistant.Config
-import com.github.flydzen.idevoiceassistant.Util
-import com.github.flydzen.idevoiceassistant.audio.saveWave
+import com.github.flydzen.idevoiceassistant.Utils
 import com.github.flydzen.idevoiceassistant.vad.AmplitudeChunkSpeechEstimator
 import com.github.flydzen.idevoiceassistant.vad.ChunkSpeechEstimator
 import com.intellij.openapi.Disposable
@@ -33,8 +32,6 @@ class VADService(
     val estimator: ChunkSpeechEstimator = AmplitudeChunkSpeechEstimator()
 
     val outputChannel = Channel<Path>(capacity = Channel.UNLIMITED)
-
-    private val LOG: Logger = thisLogger()
 
     // Окно для VAD (Silero ожидает 512 семплов при 16кГц)
     private val windowSamples = 512
@@ -123,7 +120,7 @@ class VADService(
                 silenceCounter = 0
                 phraseCounter = 1
                 phraseBuffer = ByteArrayOutputStream().also { it.write(rawBytes, 0, rawLen) }
-                Util.LOG.info("VAD: начало фразы")
+                LOG.info("VAD: начало фразы")
             } else {
                 // тишина, остаёмся вне речи
             }
@@ -150,15 +147,15 @@ class VADService(
         try {
             val durationMs = phraseCounter * windowMs
             if (durationMs < minPhraseMs) {
-                Util.LOG.info("VAD: short phrase, $durationMs ms")
+                LOG.info("VAD: short phrase, $durationMs ms")
                 return
             }
 
             val pcm = buffer.toByteArray()
             val path = createOutputPath()
-            saveWave(pcm, path.toFile())
+            Utils.saveWave(pcm, path.toFile())
             outputChannel.send(path)
-            Util.LOG.info("VAD: конец фразы - $path")
+            LOG.info("VAD: конец фразы - $path")
         } catch (e: Throwable) {
             LOG.warn("Не удалось сохранить фразу в WAV", e)
         }
@@ -174,4 +171,8 @@ class VADService(
     }
 
     override fun dispose() {}
+
+    companion object {
+        private val LOG: Logger = thisLogger()
+    }
 }

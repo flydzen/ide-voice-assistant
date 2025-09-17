@@ -1,14 +1,17 @@
 package com.github.flydzen.idevoiceassistant.services
 
-import com.github.flydzen.idevoiceassistant.Util
+import com.github.flydzen.idevoiceassistant.Utils
 import com.github.flydzen.idevoiceassistant.executor.CommandExecutor
 import com.github.flydzen.idevoiceassistant.openai.OpenAIClient
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 import kotlin.io.path.exists
 
 @Service(Service.Level.PROJECT)
@@ -26,13 +29,13 @@ class VoiceRecognitionService(private val project: Project, private val scope: C
         scope.launch {
             project.service<VADService>().outputChannel.receiveAsFlow().collectLatest { filePath ->
                 if (!filePath.exists()) return@collectLatest
-                val text = Util.timeIt("STT") {
+                val text = Utils.timeIt("STT") {
                     OpenAIClient.speech2Text(filePath.toFile())
                 }
                 if (text.isEmpty()) return@collectLatest
                 println("recognized: $text")
                 _recognizedText.emit(text)
-                val commands = Util.timeIt("TTC") {
+                val commands = Utils.timeIt("TTC") {
                     OpenAIClient.textToCommand(text)
                 }
                 println("command: ${commands.firstOrNull()}")
