@@ -7,7 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.IdeFocusManager
 
 class VimCommand(val command: String, val project: Project) : Command() {
-    private var rollbackData: RollbackEditorAction? = null
+    private var rollbackData: EditorSnapshot? = null
 
     override fun process() {
         invokeLater {
@@ -17,7 +17,7 @@ class VimCommand(val command: String, val project: Project) : Command() {
                 IdeFocusManager.getInstance(project).requestFocus(editorComponent, true)
             }
             val editor = fileEditorManager.selectedTextEditor ?: return@invokeLater
-            rollbackData = RollbackEditorAction.create(project, editor)
+            rollbackData = EditorSnapshot.create(project, editor)
             val modifiedScript = modifyVimCommandToVimScript(command)
             println("Vim original command: $command")
             println("Vim modified command: $modifiedScript")

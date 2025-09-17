@@ -9,7 +9,7 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 
-class RollbackEditorAction private constructor(
+class EditorSnapshot private constructor(
     val selectedFile: VirtualFile,
     val documentText: String,
     val caretOffset: Int,
@@ -37,9 +37,9 @@ class RollbackEditorAction private constructor(
     }
 
     companion object {
-        fun create(project: Project, editor: Editor): RollbackEditorAction? {
+        fun create(project: Project, editor: Editor): EditorSnapshot? {
             val selectedFile = project.service<FileEditorManager>().selectedFiles.firstOrNull() ?: return null
-            return RollbackEditorAction(
+            return EditorSnapshot(
                 selectedFile = selectedFile,
                 documentText = editor.document.text,
                 caretOffset = editor.caretModel.offset,
