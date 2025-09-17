@@ -119,16 +119,21 @@ Rules:
         val params = getParams(inputs)
         val response = client.responses().create(params)
         LOG.info("TTC response: $response")
-        val result = response.output().filter { it.isFunctionCall() }.map { it.asFunctionCall() }
-        return result.map {
-            val argumentsJson = it.arguments()
-            val argumentsMap: Map<String, Any> = if (argumentsJson.isBlank()) {
-                emptyMap()
-            } else {
-                objectMapper.readValue(argumentsJson)
+        return response.output()
+            .asSequence()
+            .mapNotNull { it.takeIf { it.isFunctionCall() }?.asFunctionCall() }
+            .map { functionCall ->
+                val params: Map<String, Any> = functionCall.arguments()
+                    .takeIf { it.isNotBlank() }
+                    ?.let { arguments ->
+                        runCatching {
+                            objectMapper.readValue<Map<String, Any>>(arguments)
+                        }.getOrElse { emptyMap() }
+                    }
+                    ?: emptyMap()
+                CommandResult(functionCall.name(), params = params)
             }
-            CommandResult(it.name(), params = argumentsMap)
-        }
+            .toList()
     }
 
     private fun getInputs(project: Project, text: String): List<ResponseInputItem> {
