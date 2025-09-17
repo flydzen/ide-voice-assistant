@@ -173,11 +173,18 @@ sealed class Command {
 
                 ApplicationManager.getApplication().executeOnPooledThread {
                     runReadAction {
-                        val files = FilenameIndex.getFilesByName(
-                            project,
-                            fileName,
-                            GlobalSearchScope.projectScope(project)
-                        )
+                        val allFiles = FilenameIndex.getAllFilenames(project)
+                        val matchingFilenames = allFiles.filter {
+                            it.equals(fileName, ignoreCase = true)
+                        }
+
+                        val files = matchingFilenames.flatMap { matchingName ->
+                            FilenameIndex.getFilesByName(
+                                project,
+                                matchingName,
+                                GlobalSearchScope.projectScope(project)
+                            ).toList()
+                        }
 
                         val targetFile = if (packagePrefix != null) {
                             files.find { file ->
