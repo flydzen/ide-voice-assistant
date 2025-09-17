@@ -1,6 +1,7 @@
 package com.github.flydzen.idevoiceassistant.services
 
 import com.github.flydzen.idevoiceassistant.Config
+import com.github.flydzen.idevoiceassistant.Utils
 import com.github.flydzen.idevoiceassistant.audio.listeners.AudioListener
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.Logger
@@ -84,7 +85,8 @@ class RecordAudioService(
     }
 
     private suspend fun emitPcmBytes() {
-        val buffer = ByteArray(1024*2)
+        val buffer = ByteArray(1024 * 2)
+        val output = mutableListOf<Byte>()
         try {
             while (this@RecordAudioService.isActive.get()) {
                 val n = microphone.read(buffer, 0, buffer.size)
@@ -92,11 +94,18 @@ class RecordAudioService(
                     LOG.debug("No data from microphone (n=$n)")
                     continue
                 }
-                inputChannel.send(buffer.copyOf(n))
+                val data = buffer.copyOf(n)
+                inputChannel.send(data)
+                output.addAll(data.toList())
             }
         } catch (t: Throwable) {
             LOG.warn("Capture read interrupted: ${t.message}")
             triggerOnError(t)
+        } finally {
+            if (output.isNotEmpty()) {
+                val file = Utils.saveWave(output.toByteArray(), "audio-recording-")
+                LOG.info("Audio capture finished: $file")
+            }
         }
     }
 

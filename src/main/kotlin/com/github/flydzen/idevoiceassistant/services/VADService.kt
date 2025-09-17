@@ -148,8 +148,7 @@ class VADService(
             }
 
             val pcm = buffer.toByteArray()
-            val file = Utils.createTempFile("utterance-", ".wav")
-            Utils.saveWave(pcm, file)
+            val file = Utils.saveWave(pcm, "utterance-")
             outputChannel.send(file.toPath())
             LOG.info("VAD: конец фразы - $file")
         } catch (e: Throwable) {

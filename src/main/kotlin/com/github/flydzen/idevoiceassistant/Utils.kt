@@ -12,6 +12,7 @@ import java.io.File
 import javax.sound.sampled.AudioFileFormat
 import javax.sound.sampled.AudioInputStream
 import javax.sound.sampled.AudioSystem
+import kotlin.io.path.createTempFile
 
 object Utils {
     private val LOG: Logger = thisLogger()
@@ -23,18 +24,20 @@ object Utils {
         return v
     }
 
-    fun createTempFile(prefix: String, suffix: String): File {
-        val file = kotlin.io.path.createTempFile(prefix = prefix, suffix = suffix).toFile()
-        LOG.info("Audio file created: ${file.absolutePath}")
-        return file
-    }
-
-    fun saveWave(pcmData: ByteArray, wavFile: File) {
+    fun saveWave(pcmData: ByteArray, prefix: String): File {
         val frameSize = Config.audioFormat.frameSize
         val frameLength = (pcmData.size / frameSize).toLong()
         val stream = ByteArrayInputStream(pcmData)
         val ais = AudioInputStream(stream, Config.audioFormat, frameLength)
+        val wavFile = createTempWavFile(prefix)
         AudioSystem.write(ais, AudioFileFormat.Type.WAVE, wavFile)
+        return wavFile
+    }
+
+    private fun createTempWavFile(prefix: String): File {
+        val file = createTempFile(prefix = prefix, suffix = ".waf").toFile()
+        LOG.info("Audio file created: ${file.absolutePath}")
+        return file
     }
 
     fun showNotification(project: Project, message: String) {
