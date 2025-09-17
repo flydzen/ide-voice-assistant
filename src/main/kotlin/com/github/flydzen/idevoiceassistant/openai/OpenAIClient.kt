@@ -26,7 +26,7 @@ import com.openai.models.responses.ToolChoiceOptions
 import java.io.File
 import java.time.Duration
 
-
+@Suppress("unused")
 enum class GPTModels(val modelName: String) {
     GPT5_NANO("openai/gpt-5-nano"),     // works slow and good
     GPT5_MINI("openai/gpt-5-mini"),     // ?
