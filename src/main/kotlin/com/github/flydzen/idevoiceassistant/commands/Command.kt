@@ -4,7 +4,9 @@ import com.github.flydzen.idevoiceassistant.Utils
 import com.github.flydzen.idevoiceassistant.Utils.editor
 import com.github.flydzen.idevoiceassistant.codeGeneration.AICodeGenActionsExecutor
 import com.github.flydzen.idevoiceassistant.services.VimScriptExecutionService
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
@@ -96,20 +98,19 @@ sealed class Command {
         private val LOG = thisLogger()
 
         override fun process() {
-            val baseDir = resolveBaseDirectory() ?: run {
-                LOG.warn("CreateFile: base directory not resolved")
-                return
-            }
-
-            val parts = path.replace('\\', '/').trim('/').split('/').filter { it.isNotBlank() }
-            if (parts.isEmpty()) {
-                LOG.warn("CreateFile: empty path")
-                return
-            }
-
             invokeLater {
                 WriteCommandAction.runWriteCommandAction(project) {
                     try {
+                        val baseDir = resolveBaseDirectory() ?: run {
+                            LOG.warn("CreateFile: base directory not resolved")
+                            return@runWriteCommandAction
+                        }
+
+                        val parts = path.replace('\\', '/').trim('/').split('/').filter { it.isNotBlank() }
+                        if (parts.isEmpty()) {
+                            LOG.warn("CreateFile: empty path")
+                            return@runWriteCommandAction
+                        }
                         val fileName = parts.last()
                         val parent = ensureSubdirs(baseDir, parts.dropLast(1))
 
@@ -123,7 +124,7 @@ sealed class Command {
             }
         }
 
-        private fun resolveBaseDirectory(): com.intellij.openapi.vfs.VirtualFile? {
+        private fun resolveBaseDirectory(): VirtualFile? {
             // 1) Папка текущего открытого файла (если есть)
             project.editor()?.document?.let { doc ->
                 val file = FileDocumentManager.getInstance().getFile(doc)
@@ -133,7 +134,7 @@ sealed class Command {
             return project.basePath?.let { VfsUtil.createDirectories(it) }
         }
 
-        private fun ensureSubdirs(root: com.intellij.openapi.vfs.VirtualFile, subdirs: List<String>): com.intellij.openapi.vfs.VirtualFile {
+        private fun ensureSubdirs(root: VirtualFile, subdirs: List<String>): com.intellij.openapi.vfs.VirtualFile {
             var current = root
             for (seg in subdirs) {
                 current = current.findChild(seg) ?: current.createChildDirectory(this, seg)
@@ -170,26 +171,30 @@ sealed class Command {
                     previousCaretOffset = currentEditor?.caretModel?.offset ?: 0
                 )
 
-                val files = FilenameIndex.getFilesByName(
-                    project,
-                    fileName,
-                    GlobalSearchScope.projectScope(project)
-                )
+                ApplicationManager.getApplication().executeOnPooledThread {
+                    runReadAction {
+                        val files = FilenameIndex.getFilesByName(
+                            project,
+                            fileName,
+                            GlobalSearchScope.projectScope(project)
+                        )
 
-                val targetFile = if (packagePrefix != null) {
-                    // Filter by package prefix if provided
-                    files.find { file ->
-                        val filePath = file.virtualFile.path
-                        val packagePath = packagePrefix.replace('.', '/')
-                        filePath.contains(packagePath)
+                        val targetFile = if (packagePrefix != null) {
+                            files.find { file ->
+                                val filePath = file.virtualFile.path
+                                val packagePath = packagePrefix.replace('.', '/')
+                                filePath.contains(packagePath)
+                            }
+                        } else {
+                            files.firstOrNull()
+                        }
+
+                        invokeLater {
+                            targetFile?.let { file ->
+                                openFileInEditor(file.virtualFile, project)
+                            }
+                        }
                     }
-                } else {
-                    // Take first match if no package prefix
-                    files.firstOrNull()
-                }
-
-                targetFile?.let { file ->
-                    openFileInEditor(file.virtualFile, project)
                 }
             }
         }
@@ -211,7 +216,6 @@ sealed class Command {
             }
         }
 
-
         private fun openFileInEditor(file: VirtualFile, project: Project, line: Int? = null) {
             val fileEditorManager = FileEditorManager.getInstance(project)
 
@@ -231,6 +235,7 @@ sealed class Command {
                 editor.scrollingModel.scrollToCaret(com.intellij.openapi.editor.ScrollType.CENTER)
             }
         }
+
         override fun toString(): String = "FileNavigate(fileName='$fileName')"
     }
 
@@ -248,6 +253,7 @@ sealed class Command {
                 AICodeGenActionsExecutor.discard(editor)
             }
         }
+
         override fun toString(): String = "Codegen(prompt='$prompt')"
     }
 
