@@ -3,6 +3,7 @@ package com.github.flydzen.idevoiceassistant.services
 import com.github.flydzen.idevoiceassistant.Config
 import com.github.flydzen.idevoiceassistant.Utils
 import com.github.flydzen.idevoiceassistant.audio.listeners.AudioListener
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.thisLogger
@@ -21,7 +22,7 @@ import javax.sound.sampled.TargetDataLine
 class RecordAudioService(
     @Suppress("unused") private val project: Project,
     private val scope: CoroutineScope
-) {
+) : Disposable {
     private val isActive = AtomicBoolean(false)
 
     @Volatile
@@ -113,9 +114,6 @@ class RecordAudioService(
         if (microphone.isActive) {
             microphone.stop()
         }
-        if (microphone.isOpen) {
-            microphone.close()
-        }
     }
 
     private fun triggerOnStart() {
@@ -128,6 +126,12 @@ class RecordAudioService(
 
     private fun triggerOnError(t: Throwable) {
         listeners.forEach { it.onError(t) }
+    }
+
+    override fun dispose() {
+        if (microphone.isOpen) {
+            microphone.close()
+        }
     }
 
 
