@@ -9,7 +9,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import java.awt.EventQueue.invokeLater
 
-class RunIdeAction(private val project: Project, private val actionId: String) : Command() {
+class IdeActionCommand(private val project: Project, private val actionId: String) : Command() {
     private var rollbackData: EditorSnapshot? = null
 
     override val toolName: String = "ideAction"
@@ -54,9 +54,9 @@ class RunIdeAction(private val project: Project, private val actionId: String) :
     override fun toString(): String = "RunIdeAction(actionId=\"$actionId\")"
 
     companion object {
-        fun build(project: Project, params: Map<String, Any>): RunIdeAction {
+        fun build(project: Project, params: Map<String, Any>): IdeActionCommand {
             val actionId = params["actionId"] as String
-            return RunIdeAction(project, actionId)
+            return IdeActionCommand(project, actionId)
         }
     }
 }
