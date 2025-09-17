@@ -10,8 +10,9 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.ui.Messages
+import org.jetbrains.annotations.NonNls
 
-class OpenAIRunAction : AnAction("Run OpenAI Voice Assistant") {
+class OpenAIRunAction : AnAction() {
 
     override fun actionPerformed(e: AnActionEvent) {
         val editor = e.getData(CommonDataKeys.EDITOR)
@@ -60,5 +61,11 @@ class OpenAIRunAction : AnAction("Run OpenAI Voice Assistant") {
 
     override fun update(e: AnActionEvent) {
         e.presentation.isEnabled = e.project != null
+    }
+
+    companion object {
+        @Suppress("unused")
+        @NonNls
+        private const val ACTION_ID: String = "OpenAIRunAction"
     }
 }
