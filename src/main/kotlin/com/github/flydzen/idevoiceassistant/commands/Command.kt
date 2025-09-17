@@ -134,7 +134,7 @@ sealed class Command {
             return project.basePath?.let { VfsUtil.createDirectories(it) }
         }
 
-        private fun ensureSubdirs(root: VirtualFile, subdirs: List<String>): com.intellij.openapi.vfs.VirtualFile {
+        private fun ensureSubdirs(root: VirtualFile, subdirs: List<String>): VirtualFile {
             var current = root
             for (seg in subdirs) {
                 current = current.findChild(seg) ?: current.createChildDirectory(this, seg)
@@ -173,33 +173,17 @@ sealed class Command {
 
                 ApplicationManager.getApplication().executeOnPooledThread {
                     runReadAction {
-                        val allFiles = FilenameIndex.getAllFilenames(project)
-                        val matchingFilenames = allFiles.filter {
-                            it.equals(fileName, ignoreCase = true)
-                        }
-
-                        val files = matchingFilenames.flatMap { matchingName ->
-                            FilenameIndex.getFilesByName(
-                                project,
-                                matchingName,
-                                GlobalSearchScope.projectScope(project)
-                            ).toList()
-                        }
-
-                        val targetFile = if (packagePrefix != null) {
-                            files.find { file ->
-                                val filePath = file.virtualFile.path
-                                val packagePath = packagePrefix.replace('.', '/')
-                                filePath.contains(packagePath)
-                            }
-                        } else {
-                            files.firstOrNull()
-                        }
+                        val allFileNames = FilenameIndex.getAllFilenames(project)
+                        val properFileName = allFileNames.find { it.equals(fileName, ignoreCase = true) } ?: return@runReadAction
+                        val file = FilenameIndex
+                            .getVirtualFilesByName(
+                                /* name = */ properFileName,
+                                /* scope = */ GlobalSearchScope.projectScope(project)
+                            )
+                            .firstOrNull() ?: return@runReadAction
 
                         invokeLater {
-                            targetFile?.let { file ->
-                                openFileInEditor(file.virtualFile, project)
-                            }
+                            openFileInEditor(file, project)
                         }
                     }
                 }
