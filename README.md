@@ -1,9 +1,5 @@
 # ide-voice-assistant
 
-![Build](https://github.com/flydzen/ide-voice-assistant/workflows/Build/badge.svg)
-[![Version](https://img.shields.io/jetbrains/plugin/v/MARKETPLACE_ID.svg)](https://plugins.jetbrains.com/plugin/MARKETPLACE_ID)
-[![Downloads](https://img.shields.io/jetbrains/plugin/d/MARKETPLACE_ID.svg)](https://plugins.jetbrains.com/plugin/MARKETPLACE_ID)
-
 <!-- Plugin description -->
 IDE Voice Agent lets you control IntelliJ IDEA using natural language.  
 Say what you want to do — the agent understands your intent and executes it by calling IntelliJ actions or Vim under the hood. Hands‑free, ~~fast, and safe~~.
@@ -71,7 +67,11 @@ You never have to remember specific action IDs — just describe the goal in eve
 
 ## Installation
 
-Download the [latest release](https://github.com/flydzen/ide-voice-assistant/releases/latest) and install it manually using  
+1. Create new LiteLLM API KEY https://litellm.labs.jb.gg/ui
+2. Put it to environment variable `LITELLM_API_KEY` (e.g., `export LITELLM_API_KEY=your_key`)
+3. Restart or be ensured that IntelliJ IDEA can see the environment variable 
+4. Download the [latest release](https://github.com/flydzen/ide-voice-assistant/releases/latest)
+5. Install it manually using  
 <kbd>Settings/Preferences</kbd> > <kbd>Plugins</kbd> > <kbd>⚙️</kbd> > <kbd>Install plugin from disk...</kbd>
 
 ---
