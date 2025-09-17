@@ -3,16 +3,16 @@ package com.github.flydzen.idevoiceassistant.commands
 import com.github.flydzen.idevoiceassistant.Utils
 import com.github.flydzen.idevoiceassistant.Utils.editor
 import com.github.flydzen.idevoiceassistant.codeGeneration.AICodeGenActionsExecutor
-import com.github.flydzen.idevoiceassistant.executor.CommandExecutor
-import com.github.flydzen.idevoiceassistant.openai.OpenAIClient
 import com.github.flydzen.idevoiceassistant.services.VimScriptExecutionService
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.components.service
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.IdeFocusManager
@@ -20,15 +20,29 @@ import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.search.GlobalSearchScope
 
 sealed class Command {
-    protected val LOG = thisLogger()
-
     abstract fun process()
-
+    abstract fun rollback()
     class EnterText(val text: String, val project: Project) : Command() {
+        private var rollbackData: RollbackData? = null
+
+        data class RollbackData(
+            val insertOffset: Int,
+            val insertLength: Int,
+            val virtualFile: VirtualFile?
+        )
+
+
         override fun process() {
             invokeLater {
                 val fileEditorManager = FileEditorManager.getInstance(project)
                 val editor = fileEditorManager.selectedTextEditor ?: return@invokeLater
+                val offset = editor.caretModel.offset
+
+                rollbackData = RollbackData(
+                    insertOffset = offset,
+                    insertLength = text.length,
+                    virtualFile = fileEditorManager.selectedFiles.firstOrNull()
+                )
 
                 WriteCommandAction.runWriteCommandAction(project) {
                     val document = editor.document
@@ -42,6 +56,36 @@ sealed class Command {
             }
         }
 
+        override fun rollback() {
+            invokeLater {
+                val data = rollbackData ?: return@invokeLater
+                val fileEditorManager = FileEditorManager.getInstance(project)
+
+                val currentFile = fileEditorManager.selectedFiles.firstOrNull()
+                if (currentFile != data.virtualFile) {
+                    data.virtualFile?.let { file ->
+                        fileEditorManager.openFile(file, true)
+                    }
+                }
+
+                val editor = fileEditorManager.selectedTextEditor ?: return@invokeLater
+
+                WriteCommandAction.runWriteCommandAction(project) {
+                    val document = editor.document
+                    val endOffset = data.insertOffset + data.insertLength
+
+                    if (endOffset <= document.textLength) {
+                        val actualText =
+                            document.getText(com.intellij.openapi.util.TextRange(data.insertOffset, endOffset))
+                        if (actualText == text) {
+                            document.deleteString(data.insertOffset, endOffset)
+                            editor.caretModel.moveToOffset(data.insertOffset)
+                        }
+                    }
+                }
+            }
+        }
+
         override fun toString(): String = "EnterText(text='$text')"
     }
 
@@ -50,9 +94,23 @@ sealed class Command {
         val project: Project,
         val packagePrefix: String? = null,
     ) : Command() {
+        private var rollbackData: RollbackData? = null
+
+        data class RollbackData(
+            val previousFile: VirtualFile?,
+            val previousCaretOffset: Int
+        )
+
         override fun process() {
             invokeLater {
-                // Find files by name
+                val fileEditorManager = FileEditorManager.getInstance(project)
+                val currentEditor = fileEditorManager.selectedTextEditor
+
+                rollbackData = RollbackData(
+                    previousFile = fileEditorManager.selectedFiles.firstOrNull(),
+                    previousCaretOffset = currentEditor?.caretModel?.offset ?: 0
+                )
+
                 val files = FilenameIndex.getFilesByName(
                     project,
                     fileName,
@@ -77,11 +135,29 @@ sealed class Command {
             }
         }
 
+        override fun rollback() {
+            val data = rollbackData ?: return
+
+            invokeLater {
+                val fileEditorManager = FileEditorManager.getInstance(project)
+
+                data.previousFile?.let { file ->
+                    val editor = fileEditorManager.openTextEditor(
+                        OpenFileDescriptor(project, file),
+                        true
+                    )
+
+                    editor?.caretModel?.moveToOffset(data.previousCaretOffset)
+                }
+            }
+        }
+
+
         private fun openFileInEditor(file: VirtualFile, project: Project, line: Int? = null) {
             val fileEditorManager = FileEditorManager.getInstance(project)
 
             val editor = fileEditorManager.openTextEditor(
-                com.intellij.openapi.fileEditor.OpenFileDescriptor(project, file),
+                OpenFileDescriptor(project, file),
                 true
             )
 
@@ -99,11 +175,14 @@ sealed class Command {
     }
 
     class RunIdeAction(private val actionId: String, private val project: Project) : Command() {
+        private var rollbackData: RollbackEditorData? = null
+
         override fun process() {
             invokeLater {
-                val action = ActionManager.getInstance().getAction(actionId) ?: return@invokeLater
+                val editor = project.service<FileEditorManager>().selectedTextEditor
+                editor?.let { rollbackData = collectEditorRollbackData(project, it) }
 
-                val editor = FileEditorManager.getInstance(project).selectedTextEditor
+                val action = ActionManager.getInstance().getAction(actionId) ?: return@invokeLater
                 val dataContext = SimpleDataContext.builder()
                     .add(CommonDataKeys.PROJECT, project)
                     .apply { if (editor != null) add(CommonDataKeys.EDITOR, editor) }
@@ -123,6 +202,10 @@ sealed class Command {
             }
         }
 
+        override fun rollback() {
+            rollbackData?.rollbackEditor(project)
+        }
+
         override fun toString(): String = "RunIdeAction(actionId=\"$actionId\")"
     }
 
@@ -134,31 +217,52 @@ sealed class Command {
                 AICodeGenActionsExecutor.generateCode(prompt, editor)
             }
         }
+
+        override fun rollback() {
+            invokeLater {
+                val editor = project.editor() ?: return@invokeLater
+                AICodeGenActionsExecutor.discard(editor)
+            }
+        }
     }
 
     class NotificationCommand(private val text: String, val project: Project) : Command() {
         override fun process() {
             Utils.showNotification(project, "Not recognized: $text")
         }
+
+        override fun rollback() {}
     }
 
-    class Cancel(val project: Project) : Command() {
+    class Cancel(val project: Project, val previousCommand: Command?) : Command() {
         override fun process() {
+            if (previousCommand !is Codegen) {
+                previousCommand?.rollback()
+                return
+            }
             invokeLater {
                 val editor = project.editor() ?: return@invokeLater
                 AICodeGenActionsExecutor.discard(editor)
             }
-            // TODO: cancel other commands
         }
+
+        override fun rollback() {}
     }
 
     class Approve(val project: Project) : Command() {
+        private var rollbackData: RollbackEditorData? = null
+
         override fun process() {
             invokeLater {
-                val editor = project.editor() ?: return@invokeLater
+                val editor = project.service<FileEditorManager>().selectedTextEditor ?: return@invokeLater
+                rollbackData = collectEditorRollbackData(project, editor)
                 AICodeGenActionsExecutor.acceptAllChanges(editor)
             }
             // TODO: approve other commands
+        }
+
+        override fun rollback() {
+            rollbackData?.rollbackEditor(project)
         }
     }
 
@@ -170,9 +274,13 @@ sealed class Command {
             }
             // TODO: stop other commands
         }
+
+        override fun rollback() {}
     }
 
     class VimCommand(val project: Project, val command: String) : Command() {
+        private var rollbackData: RollbackEditorData? = null
+
         override fun process() {
             invokeLater {
                 val fileEditorManager = FileEditorManager.getInstance(project)
@@ -180,6 +288,8 @@ sealed class Command {
                 if (editorComponent != null) {
                     IdeFocusManager.getInstance(project).requestFocus(editorComponent, true)
                 }
+                val editor = fileEditorManager.selectedTextEditor ?: return@invokeLater
+                rollbackData = collectEditorRollbackData(project, editor)
                 val modifiedScript = modifyVimCommandToVimScript(command)
                 VimScriptExecutionService.getInstance(project).execute(modifiedScript)
             }
@@ -188,8 +298,61 @@ sealed class Command {
         private fun modifyVimCommandToVimScript(command: String): String {
             return if (!command.startsWith(":")) {
                 ":normal $command<cr>"
+            } else command
+        }
+
+        override fun rollback() {
+            rollbackData?.rollbackEditor(project)
+        }
+    }
+
+    class RollbackEditorData(
+        val editorState: EditorState?
+    )
+
+    data class EditorState(
+        val virtualFile: VirtualFile,
+        val documentText: String,
+        val caretOffset: Int,
+        val selectionStart: Int,
+        val selectionEnd: Int
+    )
+
+    companion object {
+        fun RollbackEditorData.rollbackEditor(project: Project) {
+            val data = editorState ?: return
+
+            invokeLater {
+                val editor = project.service<FileEditorManager>().openTextEditor(
+                    OpenFileDescriptor(project, data.virtualFile),
+                    true
+                ) ?: return@invokeLater
+
+                WriteCommandAction.runWriteCommandAction(project) {
+                    if (editor.document.text != data.documentText) {
+                        editor.document.setText(data.documentText)
+                    }
+
+                    editor.caretModel.moveToOffset(data.caretOffset)
+                    if (data.selectionStart != data.selectionEnd) {
+                        editor.selectionModel.setSelection(data.selectionStart, data.selectionEnd)
+                    }
+                }
             }
-            else command
+        }
+
+        fun collectEditorRollbackData(project: Project, editor: Editor): RollbackEditorData {
+            return RollbackEditorData(
+                editorState = project.service<FileEditorManager>().selectedFiles.firstOrNull()?.let { file ->
+                    EditorState(
+                        virtualFile = file,
+                        documentText = editor.document.text,
+                        caretOffset = editor.caretModel.offset,
+                        selectionStart = editor.selectionModel.selectionStart,
+                        selectionEnd = editor.selectionModel.selectionEnd
+                    )
+                }
+            )
         }
     }
 }

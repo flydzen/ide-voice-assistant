@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.ui.Messages
 
@@ -31,7 +32,7 @@ class OpenAIRunAction : AnAction("Run OpenAI Voice Assistant") {
             try {
                 val commands = OpenAIClient.textToCommand(project, textToProcess)
                 println(commands)
-                CommandExecutor().execute(project, commands)
+                project.service<CommandExecutor>().execute(project, commands)
             } catch (e: Exception) {
                 ApplicationManager.getApplication().invokeLater {
                     Messages.showErrorDialog(

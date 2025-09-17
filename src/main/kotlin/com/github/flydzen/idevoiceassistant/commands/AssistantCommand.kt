@@ -8,7 +8,7 @@ enum class AssistantCommand(
     val toolName: String,
     val description: String,
     val parameters: List<Parameter>,
-    val build: (project: Project, params: Map<String, Any>) -> Command?
+    val build: (project: Project, previousCommand: Command?, params: Map<String, Any>) -> Command?
 ) {
     INSERT(
         toolName = "insert",
@@ -16,7 +16,7 @@ enum class AssistantCommand(
         parameters = listOf(
             Parameter("text", "string", "Text to insert")
         ),
-        build = { project, params ->
+        build = { project, _, params ->
             val text = params["text"] as String
             Command.EnterText(text, project)
         }
@@ -28,7 +28,7 @@ enum class AssistantCommand(
         parameters = listOf(
             Parameter("prompt", "string", "Prompt for code generation")
         ),
-        build = { project, params ->
+        build = { project, _, params ->
             val prompt = params["prompt"] as String
             Command.Codegen(prompt, project)
         }
@@ -40,7 +40,7 @@ enum class AssistantCommand(
         parameters = listOf(
             Parameter("fileName", "string", "File name to open (e.g., MyClass.kt)")
         ),
-        build = { project, params ->
+        build = { project, _, params ->
             val fileName = params["fileName"] as String
             Command.FileNavigate(fileName, project)
         }
@@ -50,8 +50,8 @@ enum class AssistantCommand(
         toolName = "cancel",
         description = "Cancel current command",
         parameters = emptyList(),
-        build = { project, _ ->
-            Command.Cancel(project)
+        build = { project, prev, _ ->
+            Command.Cancel(project, prev)
         }
     ),
 
@@ -59,7 +59,7 @@ enum class AssistantCommand(
         toolName = "approve",
         description = "Approve changes",
         parameters = emptyList(),
-        build = { project, _ ->
+        build = { project, _, _ ->
             Command.Approve(project)
         }
     ),
@@ -68,7 +68,7 @@ enum class AssistantCommand(
         toolName = "stop",
         description = "Stop current command",
         parameters = emptyList(),
-        build = { project, _ ->
+        build = { project, _, _ ->
             Command.Stop(project)
         }
     ),
@@ -79,7 +79,7 @@ enum class AssistantCommand(
         parameters = listOf(
             Parameter("action", "string", "Name of Intellij IDEA action (e.g., ReformatCode)")
         ),
-        build = { project, params ->
+        build = { project, _, params ->
             val fileName = params["action"] as String
             Command.RunIdeAction(fileName, project)
         }
@@ -89,7 +89,7 @@ enum class AssistantCommand(
         toolName = "vimCommand",
         description = "Execute Vim command. Use it only if you know exactly command.",
         parameters = listOf(Parameter("command", "string", "Vim command to be executed")),
-        build = { project, params ->
+        build = { project, _, params ->
             val params = params["command"] as String
             Command.VimCommand(project, params)
         }
@@ -102,7 +102,7 @@ enum class AssistantCommand(
             Parameter("reason", "string", "The reason you don't know"),
             Parameter("research", "boolean", "Whether to redirect question to more powerfull model. Don't use if you need some information from user"),
         ),
-        build = { project, params ->
+        build = { project, _, params ->
             Command.NotificationCommand(params["reason"] as String, project)
         }
     );
@@ -113,7 +113,7 @@ enum class AssistantCommand(
         private fun fromResult(result: CommandResult): AssistantCommand? =
             byToolName[result.name.lowercase()]
 
-        fun toDomainCommand(project: Project, result: CommandResult): Command? =
-            fromResult(result)?.build?.let { it(project, result.params) }
+        fun toDomainCommand(project: Project, prev: Command?, result: CommandResult): Command? =
+            fromResult(result)?.build?.let { it(project, prev,result.params) }
     }
 }

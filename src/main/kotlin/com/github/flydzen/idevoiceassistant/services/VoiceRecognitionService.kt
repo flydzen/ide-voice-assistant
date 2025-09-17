@@ -43,7 +43,7 @@ class VoiceRecognitionService(private val project: Project, private val scope: C
                     OpenAIClient.textToCommand(project, text)
                 }
                 println("command: ${commands.firstOrNull()}")
-                CommandExecutor().execute(project, commands)
+                project.service<CommandExecutor>().execute(project, commands)
                 project.service<StageService>().setStage(Stage.Ready)
             }
         }

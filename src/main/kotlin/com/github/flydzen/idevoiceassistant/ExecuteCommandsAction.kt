@@ -5,6 +5,7 @@ import com.github.flydzen.idevoiceassistant.executor.CommandExecutor
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 
 class ExecuteCommandsAction : AnAction() {
@@ -16,8 +17,7 @@ class ExecuteCommandsAction : AnAction() {
         val commands = createSampleCommands(project)
 
         // Execute commands using your executor
-        val executor = CommandExecutor()
-        executor.execute(commands)
+        project.service<CommandExecutor>().execute(commands)
     }
 
     override fun getActionUpdateThread(): ActionUpdateThread {
