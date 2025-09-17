@@ -1,4 +1,4 @@
-package com.github.flydzen.idevoiceassistant
+package com.github.flydzen.idevoiceassistant.actions
 
 import com.github.flydzen.idevoiceassistant.commands.Command
 import com.github.flydzen.idevoiceassistant.commands.EnterTextCommand
