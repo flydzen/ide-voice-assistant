@@ -8,7 +8,6 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -30,7 +29,7 @@ class RecordAudioService(
     @get:Synchronized
     private val microphone = createMicrophone()
 
-    val inputChannel = Channel<ByteArray>(capacity = Channel.BUFFERED, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    val inputChannel = Channel<ByteArray>(capacity = Channel.UNLIMITED)
 
     fun start() {
         if (!lock()) {
