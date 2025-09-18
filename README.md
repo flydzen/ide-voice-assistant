@@ -67,11 +67,12 @@ You never have to remember specific action IDs — just describe the goal in eve
 
 ## Installation
 
-1. Create new LiteLLM API KEY https://litellm.labs.jb.gg/ui
-2. Put it to environment variable `LITELLM_API_KEY` (e.g., `export LITELLM_API_KEY=your_key`)
-3. Restart or be ensured that IntelliJ IDEA can see the environment variable 
-4. Download the [latest release](https://github.com/flydzen/ide-voice-assistant/releases/latest)
-5. Install it manually using  
+1. Turn on internal VPN
+2. Create new LiteLLM API KEY https://litellm.labs.jb.gg/ui
+3. Put it to environment variable `LITELLM_API_KEY` (e.g., `export LITELLM_API_KEY=your_key`)
+4. Restart or be ensured that IntelliJ IDEA can see the environment variable 
+5. Download the [latest release](https://github.com/flydzen/ide-voice-assistant/releases/latest)
+6. Install it manually using  
 <kbd>Settings/Preferences</kbd> > <kbd>Plugins</kbd> > <kbd>⚙️</kbd> > <kbd>Install plugin from disk...</kbd>
 
 ---
