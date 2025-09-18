@@ -56,9 +56,9 @@ object OpenAIClient {
 
     private val HEAVY_MODEL = GPTModels.GPT5_MINI
     private const val LITELLM_URL: String = "https://litellm.labs.jb.gg"
-    private val LITELLM_API_KEY: String = System.getenv("LITELLM_API_KEY")
+    private val LITELLM_API_KEY: String = (System.getProperty("LITELLM_API_KEY") ?: System.getenv("LITELLM_API_KEY"))
         .takeIf { !it.isNullOrBlank() }
-        ?: error("LITELLM_API_KEY environment variable is not set")
+        ?: error("LITELLM_API_KEY property or environment variable is not set")
 
     private fun getPromptBase(language: Language?) = """
 You are an Intellij IDEA voice command router (ru/en). Map the user's utterance to exactly one function call. You always have open file with set carriage.

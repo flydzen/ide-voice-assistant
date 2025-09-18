@@ -69,12 +69,12 @@ You never have to remember specific action IDs — just describe the goal in eve
 
 1. Turn on internal VPN
 2. Create new LiteLLM API KEY https://litellm.labs.jb.gg/ui
-3. Put it to environment variable `LITELLM_API_KEY` (e.g., add `export LITELLM_API_KEY=your_key` to your `~/.zprofile`)
-4. Restart or be ensured that IntelliJ IDEA can see the environment variable!
-5. Download the [latest release](https://github.com/flydzen/ide-voice-assistant/releases/latest)
-6. Install it manually using  
+3. Put it to system property: add the line `-DLITELLM_API_KEY=your-key` to
+<kbd>Help</kbd> > <kbd>Edit Custom VM Options...</kbd>
+4. Download the [latest release](https://github.com/flydzen/ide-voice-assistant/releases/latest)
+5. Install it manually using  
 <kbd>Settings/Preferences</kbd> > <kbd>Plugins</kbd> > <kbd>⚙️</kbd> > <kbd>Install plugin from disk...</kbd>
-7. Enable it on the right panel
+6. Enable it on the right panel
 
 ---
 
